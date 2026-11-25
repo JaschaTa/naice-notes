@@ -2,7 +2,7 @@
 
 Shared sections sync through a personal Supabase project. Everything server-side lives in
 `migrations/`; RLS is the only security boundary, so the project URL and anon key are not
-secrets (they still stay out of this repo — see `local.properties` and the Pages env vars).
+secrets (they still stay out of this repo — see `android/local.properties` and the Pages env vars).
 
 ## Test locally
 

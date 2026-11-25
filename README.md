@@ -1,8 +1,17 @@
 # Naice Notes
 
-A small personal Android app for sectioned bullet-list note-taking, with a home-screen widget and a recipe-photo → ingredient extractor.
+A small personal app for sectioned bullet-list note-taking, with an Android home-screen widget and a recipe-photo → ingredient extractor.
 
-Built for Android 14+ (API 34), targeted at a Samsung S24 sideload. Single-user, local-only storage (Room), no accounts, no cloud sync.
+The Android app is built for Android 14+ (API 34), targeted at a Samsung S24 sideload. Notes live in Room on the phone and sync through Supabase, which also backs an iPhone/web app and per-section sharing.
+
+## Repository layout
+
+| Folder | What |
+|---|---|
+| `android/` | Android app (Kotlin, Compose) — the Gradle project |
+| `pwa/` | iPhone/web client (Vite, Preact, TypeScript), deployed to Cloudflare Workers |
+| `supabase/` | Sync backend and the sync contract both clients follow |
+| `docs/`, `design-mockups/` | Screenshots and design explorations |
 
 ## Features
 
@@ -15,7 +24,7 @@ Built for Android 14+ (API 34), targeted at a Samsung S24 sideload. Single-user,
 
 ## Recipe-scan backend (private)
 
-The recipe-scan flow depends on a personal n8n webhook that calls an LLM behind credentials I'm not publishing. If you build this repo without configuring `RECIPE_SCAN_URL` and `RECIPE_SCAN_SECRET` in `local.properties`, the rest of the app still works — only the "scan recipe" button surfaces a "not configured" message.
+The recipe-scan flow depends on a personal n8n webhook that calls an LLM behind credentials I'm not publishing. If you build this repo without configuring `RECIPE_SCAN_URL` and `RECIPE_SCAN_SECRET` in `android/local.properties`, the rest of the app still works — only the "scan recipe" button surfaces a "not configured" message.
 
 To wire up your own backend, the shape the app expects is:
 
@@ -23,24 +32,25 @@ To wire up your own backend, the shape the app expects is:
 |---|---|
 | `POST` with multipart body containing `image` (JPEG) and header `X-Auth: <shared-secret>` | `200 {"ingredients": ["2 cups flour", "1 tsp salt", ...]}` |
 
-Any backend that satisfies that contract — n8n, a Cloud Function, a small server — will work. See `local.properties.example` for the two values the build needs.
+Any backend that satisfies that contract — n8n, a Cloud Function, a small server — will work. See `android/local.properties.example` for the two values the build needs.
 
 ## Building
 
 Requires Android Studio (Hedgehog or later) and JDK 17+.
 
 ```bash
+cd android
 cp local.properties.example local.properties
 # edit local.properties — fill in sdk.dir, and (optionally) the recipe-scan vars
 ./gradlew :app:assembleDebug
 ```
 
-The debug APK lands at `app/build/outputs/apk/debug/app-debug.apk`.
+The debug APK lands at `android/app/build/outputs/apk/debug/app-debug.apk`.
 
 To install over wireless ADB:
 
 ```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ## Stack

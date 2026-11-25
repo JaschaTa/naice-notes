@@ -1,6 +1,15 @@
 # Naice Notes — development notes
 
-Personal Android app, sideloaded onto a Samsung Galaxy S24 (SM-S921B). See [README](./README.md) for what the app is and how to build it from scratch.
+Personal notes app: an Android app sideloaded onto a Samsung Galaxy S24 (SM-S921B), an iPhone/web PWA, and a Supabase sync backend. See [README](./README.md) for what the app is and how to build it from scratch.
+
+## Repository layout
+
+- `android/` — the Android app (Gradle root). **Android paths in this file (`app/…`, `data/…`, `res/…`, `local.properties`) are relative to `android/`; run Gradle from there.**
+- `pwa/` — iPhone/web client, see "Web app (PWA) and sync".
+- `supabase/` — sync backend and the sync contract both clients follow.
+- `docs/`, `design-mockups/` — screenshots and design explorations.
+
+The repo was `naice-notes-apk` with the Android project at the top level until 2026-11-25; GitHub redirects the old name.
 
 Single developer, history is linear on `main`, no branches. Commit messages are short neutral summaries, not change logs.
 
@@ -8,11 +17,11 @@ Single developer, history is linear on `main`, no branches. Commit messages are 
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-./gradlew :app:assembleDebug
-# → app/build/outputs/apk/debug/app-debug.apk
+cd android && ./gradlew :app:assembleDebug
+# → android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-`local.properties` holds the SDK path plus two webhook configs — recipe scan (`RECIPE_SCAN_URL`, `RECIPE_SCAN_SECRET`) and vault task inbox (`INBOX_PUSH_URL`, `INBOX_PUSH_JWT_SECRET`). It's gitignored, and this repo is public, so **no URL or secret may ever be committed**. A missing key becomes `""` and the matching feature reports itself unconfigured rather than failing at the call site: without it the app still builds, only the scan button and the inbox push degrade. The two secrets must stay distinct — reusing one token across webhooks is prohibited by the company webhook-security rules.
+`android/local.properties` holds the SDK path plus two webhook configs — recipe scan (`RECIPE_SCAN_URL`, `RECIPE_SCAN_SECRET`) and vault task inbox (`INBOX_PUSH_URL`, `INBOX_PUSH_JWT_SECRET`). It's gitignored, and this repo is public, so **no URL or secret may ever be committed**. A missing key becomes `""` and the matching feature reports itself unconfigured rather than failing at the call site: without it the app still builds, only the scan button and the inbox push degrade. The two secrets must stay distinct — reusing one token across webhooks is prohibited by the company webhook-security rules.
 
 ## Testing on the emulator
 
@@ -20,7 +29,7 @@ AVD `Pixel_9` — API 36, arm64-v8a, an exact match for `targetSdk 36`. Fastest 
 
 ```bash
 ~/Library/Android/sdk/emulator/emulator -avd Pixel_9
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
 Two traps that silently invalidate UI tests — both cost real time before being identified:
@@ -114,7 +123,7 @@ Two traps cost real time here, both of which make a working app look broken:
 
 **logcat drops stack-trace continuation lines under a tag filter.** `Log.w(TAG, msg, throwable)` printed only the message, so the cause was invisible exactly when needed. Failures therefore log the exception **inline** in the message string.
 
-**Unquoted globs in `zsh` silently sabotage diagnosis — this has bitten three times.** `logcat -s NaiceNotes:*` and `grep -r … --include=*.kt` both die with "no matches found" *before* running, and in a compound command the surrounding output makes it look like the tool ran and found nothing. Quote the argument: `logcat "NaiceNotes:I" "*:S"`, `grep -r "pattern" app/src/`. Related: never pipe logcat through `head` while grepping — install-time noise fills the first screenful, and it's easy to conclude wrongly that the app logged nothing.
+**Unquoted globs in `zsh` silently sabotage diagnosis — this has bitten three times.** `logcat -s NaiceNotes:*` and `grep -r … --include=*.kt` both die with "no matches found" *before* running, and in a compound command the surrounding output makes it look like the tool ran and found nothing. Quote the argument: `logcat "NaiceNotes:I" "*:S"`, `grep -r "pattern" android/app/src/`. Related: never pipe logcat through `head` while grepping — install-time noise fills the first screenful, and it's easy to conclude wrongly that the app logged nothing.
 
 `retryMissingLinkPreviews()` logs its queue size at `I` on every launch — that one line distinguishes "the query found nothing" from "the fetch failed", which was the crux of this diagnosis.
 
@@ -146,14 +155,14 @@ The alternative was `androidx.emoji2:emoji2-emojipicker`, measured at **+4.44 MB
 
 ## Database migrations
 
-**Currently at schema version 8**, with `MIGRATION_1_2` (link-preview columns), `MIGRATION_2_3` (`linkFetchFailed`), `MIGRATION_3_4` (clears `linkFetchFailed` after the UA-policy change), `MIGRATION_4_5` (`sections.remoteKind`, `items.pushedAt`), `MIGRATION_5_6` (`sections.emoji`) and `MIGRATION_6_7` (`items.dueAt`, `items.repeatWeeks`) and `MIGRATION_7_8` (sync: `uuid`, `sortKey`, `dirty`/`version`/`rev`, `sections.spaceId`, `items.createdBy`, tables `pending_deletes`, `sync_spaces`, `sync_meta`) all registered in `AppDatabase.get()`. The next schema change is 8→9. From v8 the schema is exported to `app/schemas/` (commit it) — earlier versions never were. 7→8 was verified against the S24's real data on the emulator: counts held and the order in every section and the rail was identical.
+**Currently at schema version 8**, with `MIGRATION_1_2` (link-preview columns), `MIGRATION_2_3` (`linkFetchFailed`), `MIGRATION_3_4` (clears `linkFetchFailed` after the UA-policy change), `MIGRATION_4_5` (`sections.remoteKind`, `items.pushedAt`), `MIGRATION_5_6` (`sections.emoji`) and `MIGRATION_6_7` (`items.dueAt`, `items.repeatWeeks`) and `MIGRATION_7_8` (sync: `uuid`, `sortKey`, `dirty`/`version`/`rev`, `sections.spaceId`, `items.createdBy`, tables `pending_deletes`, `sync_spaces`, `sync_meta`) all registered in `AppDatabase.get()`. The next schema change is 8→9. From v8 the schema is exported to `android/app/schemas/` (commit it) — earlier versions never were. 7→8 was verified against the S24's real data on the emulator: counts held and the order in every section and the rail was identical.
 
 The DB holds the only copy of real notes and there is no export yet, so `AppDatabase` deliberately does **not** call `fallbackToDestructiveMigration()`. Every schema change needs a real `Migration`; adding nullable columns needs no backfill. Verify an upgrade against populated data before shipping — install over the previous build and confirm `PRAGMA user_version` advanced and row counts held (reading the WAL, per the gotcha above). Take a backup first: `~/naice-notes-backups/` holds one set per migration so far.
 
 ## Tests
 
 ```bash
-./gradlew :app:testDebugUnitTest      # JVM only, no device needed
+cd android && ./gradlew :app:testDebugUnitTest      # JVM only, no device needed
 ```
 
 All plain JVM — deliberately no Compose UI tests, because every run would need an emulator and the emulator can't reproduce the One UI launcher or IME behaviour where the real layout risk lives.
