@@ -36,6 +36,6 @@ node_modules/
 .playwright-mcp/
 
 # Review-loop screenshots (docs/review-loop.md)
-/.review/
+**/.review/
 # Reviewers' hardening list: names weak spots, stays off the public repo
-/docs/hardening.md
+**/docs/hardening.md

@@ -128,7 +128,14 @@ Deno.serve(async (req) => {
 
   const body = await res.json().catch(() => null)
   if (!res.ok || !body || body.error) {
-    console.error('scan-recipe: upstream error', res.status, JSON.stringify(body?.error ?? body).slice(0, 2000))
+    // Metadata only: an upstream error can echo the request back (OpenRouter's `metadata.raw`),
+    // so log its status, code and message, never the body.
+    const err = body?.error
+    console.error('scan-recipe: upstream error', res.status, JSON.stringify({
+      code: err?.code ?? null,
+      message: typeof err?.message === 'string' ? err.message.slice(0, 200) : null,
+      provider: err?.metadata?.provider_name ?? null,
+    }))
     return reply(502, { error: 'the scan service failed, try again' })
   }
 

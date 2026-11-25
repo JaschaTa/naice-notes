@@ -92,7 +92,7 @@ export function ScanSheet({ file, sections, initialSectionId, scanner, notes, on
   }
 
   return (
-    <Sheet onClose={onClose} label="Review ingredients">
+    <Sheet onClose={onClose} label="Review ingredients" scrimCloses={false}>
       <div style={{ '--accent': target ? cssColor(target.color) : undefined }}>
         <h2>Review ingredients</h2>
         <div class="label">Add to</div>
@@ -105,16 +105,17 @@ export function ScanSheet({ file, sections, initialSectionId, scanner, notes, on
           ))}
         </div>
         <div class="label">Ingredients</div>
-        {lines.map((l, i) => (
-          <div key={i} class={l.include ? 'scan-line' : 'scan-line off'}>
-            <button class="scan-check" aria-label={l.include ? 'Leave out' : 'Include'} aria-pressed={l.include}
-              onClick={() => update(i, { include: !l.include })}>
-              {l.include ? <CheckCircle /> : <RadioUnchecked />}
-            </button>
-            <input class="scan-text" value={l.text} autocomplete="off" enterKeyHint="done"
-              onInput={(e) => update(i, { text: e.currentTarget.value })} />
-          </div>
-        ))}
+        <div class="scan-lines">
+          {lines.map((l, i) => (
+            <div key={i} class={l.include ? 'scan-line' : 'scan-line off'}>
+              <button class="scan-check" aria-label={l.include ? 'Leave out' : 'Include'} aria-pressed={l.include}
+                onClick={() => update(i, { include: !l.include })}>
+                {l.include ? <CheckCircle /> : <RadioUnchecked />}
+              </button>
+              <LineText value={l.text} label={`Ingredient ${i + 1}`} onChange={(text) => update(i, { text })} />
+            </div>
+          ))}
+        </div>
         <div class="sheet-actions">
           <button class="btn text" onClick={onClose}>Cancel</button>
           <span class="grow" />
@@ -124,5 +125,25 @@ export function ScanSheet({ file, sections, initialSectionId, scanner, notes, on
         </div>
       </div>
     </Sheet>
+  )
+}
+
+/**
+ * One ingredient as a one-row textarea that grows with its text, so a long line wraps instead of
+ * being cut off. The height comes from CSS, not from measuring: an invisible copy of the text in
+ * the same grid cell (`.scan-grow::after`) sizes the row. That follows width changes (rotation),
+ * and the field never collapses to measure, which made a scrolled sheet jump while typing. Still
+ * one line of data: Enter means done (unless it confirms an IME composition), pasted newlines
+ * become spaces.
+ */
+function LineText({ value, label, onChange }: { value: string; label: string; onChange: (text: string) => void }) {
+  return (
+    <div class="scan-grow" data-value={value}>
+      <textarea class="scan-text" rows={1} value={value} aria-label={label} autocomplete="off" enterkeyhint="done"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); e.currentTarget.blur() }
+        }}
+        onInput={(e) => onChange(e.currentTarget.value.replace(/\s*\n\s*/g, ' '))} />
+    </div>
   )
 }

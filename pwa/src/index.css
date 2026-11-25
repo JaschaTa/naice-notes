@@ -245,12 +245,21 @@ input, textarea { font-size: max(16px, 1em); }
 .scan-target { flex: none; padding: 6px 12px; border-radius: 16px; border: 1.5px solid var(--outline-variant); font-size: 14px; font-weight: 500;
   white-space: nowrap; }
 .scan-target.on { background: var(--section); border-color: var(--section); color: #fff; }
-.scan-line { display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--surface-high); }
-.scan-line:last-of-type { border-bottom: 0; }
+/* Lines wrap. The textarea and an invisible copy of its text (::after, from data-value) share one
+   grid cell, so the copy sets the row height and the textarea stretches to it (ScanSheet's
+   LineText). The copy wraps a little early on purpose: 10px clear on the right (iOS insets textarea
+   text ~3px a side) and break-spaces. Wrapping early costs a spare row, wrapping late cuts text off.
+   A 20px line plus 10px padding is exactly the tick's 40px, so the tick sits by the first line. */
+.scan-line { display: flex; align-items: flex-start; gap: 6px; border-bottom: 1px solid var(--surface-high); }
+.scan-line:last-child { border-bottom: 0; }
 .scan-check { flex: none; width: 36px; height: 40px; display: grid; place-items: center; color: var(--accent); }
 .scan-line.off .scan-check { color: var(--outline); }
-.scan-text { flex: 1; min-width: 0; font-size: 16px; padding: 10px 0; border: 0; outline: 0; background: transparent; color: inherit;
-  caret-color: var(--accent); user-select: text; -webkit-user-select: text; }
+.scan-grow { flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
+.scan-grow::after, .scan-text { grid-area: 1 / 1; font: inherit; font-size: 16px; line-height: 20px; padding-top: 10px;
+  padding-bottom: 10px; overflow-wrap: anywhere; }
+.scan-grow::after { content: attr(data-value) " "; visibility: hidden; padding-right: 10px; white-space: break-spaces; }
+.scan-text { margin: 0; padding-left: 0; padding-right: 0; border: 0; outline: 0; background: transparent; color: inherit;
+  white-space: pre-wrap; resize: none; overflow: hidden; caret-color: var(--accent); user-select: text; -webkit-user-select: text; }
 .scan-line.off .scan-text { color: var(--outline); text-decoration: line-through; }
 
 /* ── Snackbar & sync status ── */
