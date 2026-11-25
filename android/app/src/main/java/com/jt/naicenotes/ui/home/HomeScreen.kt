@@ -192,6 +192,8 @@ private sealed interface HomeDialog {
 @Composable
 fun HomeScreen(
     initialSectionId: Long? = null,
+    jumpToSectionId: Long? = null,
+    onJumped: () -> Unit = {},
     onScan: (Long?) -> Unit = {},
 ) {
     val repo = rememberRepository()
@@ -225,6 +227,15 @@ fun HomeScreen(
     // onNewIntent), align the in-app selection to it.
     LaunchedEffect(initialSectionId) {
         if (initialSectionId != null) selectedId = initialSectionId
+    }
+
+    // A recipe scan just added items somewhere — show that section. Consumed once, so
+    // returning to Home later doesn't yank the selection back.
+    LaunchedEffect(jumpToSectionId) {
+        if (jumpToSectionId != null) {
+            selectedId = jumpToSectionId
+            onJumped()
+        }
     }
 
     LaunchedEffect(sections) {

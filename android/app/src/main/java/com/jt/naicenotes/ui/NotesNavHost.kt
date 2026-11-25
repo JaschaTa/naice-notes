@@ -1,6 +1,8 @@
 package com.jt.naicenotes.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -8,6 +10,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.jt.naicenotes.ui.home.HomeScreen
 import com.jt.naicenotes.ui.scan.ScanRecipeScreen
+
+/** Result key: the section a recipe scan just filled, so Home can switch to it. */
+private const val SCANNED_SECTION_KEY = "scannedSectionId"
 
 private object Routes {
     const val HOME = "home"
@@ -20,9 +25,14 @@ private object Routes {
 fun NotesNavHost(initialSectionId: Long? = null) {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Routes.HOME) {
-        composable(Routes.HOME) {
+        composable(Routes.HOME) { entry ->
+            val scannedSectionId by entry.savedStateHandle
+                .getStateFlow<Long?>(SCANNED_SECTION_KEY, null)
+                .collectAsStateWithLifecycle()
             HomeScreen(
                 initialSectionId = initialSectionId,
+                jumpToSectionId = scannedSectionId,
+                onJumped = { entry.savedStateHandle[SCANNED_SECTION_KEY] = null },
                 onScan = { sectionId ->
                     navController.navigate(Routes.scan(sectionId))
                 },
@@ -42,6 +52,10 @@ fun NotesNavHost(initialSectionId: Long? = null) {
             ScanRecipeScreen(
                 initialSectionId = sectionId,
                 onClose = { navController.popBackStack() },
+                onAdded = { target ->
+                    navController.previousBackStackEntry?.savedStateHandle?.set(SCANNED_SECTION_KEY, target)
+                    navController.popBackStack()
+                },
             )
         }
     }
