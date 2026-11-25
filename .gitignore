@@ -34,3 +34,8 @@ node_modules/
 
 # Playwright MCP screenshots and snapshots from browser checks
 .playwright-mcp/
+
+# Review-loop screenshots (docs/review-loop.md)
+/.review/
+# Reviewers' hardening list: names weak spots, stays off the public repo
+/docs/hardening.md
