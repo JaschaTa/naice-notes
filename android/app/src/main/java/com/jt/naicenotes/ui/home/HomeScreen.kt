@@ -2,7 +2,10 @@ package com.jt.naicenotes.ui.home
 
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -77,6 +80,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -137,7 +142,10 @@ import com.jt.naicenotes.ui.util.rememberApp
 import com.jt.naicenotes.ui.util.rememberNow
 import com.jt.naicenotes.ui.util.reorderWithin
 import com.jt.naicenotes.ui.util.rememberRepository
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import kotlin.math.abs
@@ -177,6 +185,19 @@ private val ARMED_COLOR = Color(0xFF4CAF50)
 /** Leading bar on a due row, drawn rather than laid out so it can't shift the content. */
 private val DUE_BAR_WIDTH = 3.dp
 
+/**
+ * A note this device just added gets a short light flash: snaps on, holds a beat, fades — 0.7s,
+ * the same curve as the PWA's `.row.fresh`. The wash is `onSurface`, not the section accent, so
+ * it reads as "new" and never as a section or the due amber: near-white in dark mode, grey in
+ * light mode, where white wouldn't show. [FRESH_MS] keeps the ids a little past the flash, so a
+ * row that composes late still gets the whole thing.
+ */
+private const val FRESH_ALPHA = 0.30f
+private const val FRESH_RISE_MS = 50
+private const val FRESH_HOLD_MS = 125L
+private const val FRESH_FADE_MS = 525
+private const val FRESH_MS = 1_000L
+
 private sealed interface HomeDialog {
     data object NewSection : HomeDialog
     data object EditSection : HomeDialog
@@ -193,6 +214,7 @@ private sealed interface HomeDialog {
 fun HomeScreen(
     initialSectionId: Long? = null,
     jumpToSectionId: Long? = null,
+    jumpHighlightIds: Set<Long> = emptySet(),
     onJumped: () -> Unit = {},
     onScan: (Long?) -> Unit = {},
 ) {
@@ -211,6 +233,15 @@ fun HomeScreen(
     val now by rememberNow()
     val counts = countsBySection(itemBuckets, now)
     val totals = totalsBySection(itemBuckets)
+
+    // Notes this device just added, highlighted until the newest has had its full flash. Ids
+    // accumulate rather than replace, so a quick second add doesn't cut the first one short.
+    var freshIds by remember { mutableStateOf<Set<Long>>(emptySet()) }
+    LaunchedEffect(freshIds) {
+        if (freshIds.isEmpty()) return@LaunchedEffect
+        delay(FRESH_MS)
+        freshIds = emptySet()
+    }
 
     // Collapsing the rail hands its 70dp back to the list — worth it while reading or writing
     // long items. Persisted, because it's a preference rather than a transient mode.
@@ -234,6 +265,7 @@ fun HomeScreen(
     LaunchedEffect(jumpToSectionId) {
         if (jumpToSectionId != null) {
             selectedId = jumpToSectionId
+            freshIds = freshIds + jumpHighlightIds
             onJumped()
         }
     }
@@ -316,7 +348,6 @@ fun HomeScreen(
                         onToggleRail = {
                             scope.launch { UiPrefs.setRailCollapsed(context, !railCollapsed) }
                         },
-                        onScan = { onScan(selectedSection.id) },
                         onClear = { dialog = HomeDialog.ClearItems },
                         onEdit = { dialog = HomeDialog.EditSection },
                         onDelete = { dialog = HomeDialog.DeleteSection },
@@ -337,6 +368,7 @@ fun HomeScreen(
                         canMove = sections.size > 1,
                         isClaudeSection = selectedSection.isClaudeSection,
                         now = now,
+                        freshIds = freshIds,
                         onMoveRequested = { dialog = HomeDialog.MoveItem(it) },
                         onEditTimerRequested = { dialog = HomeDialog.EditTimer(it) },
                         onItemDeleted = { deletedItem ->
@@ -367,12 +399,15 @@ fun HomeScreen(
                         onSubmit = { text, sendToClaude, schedule ->
                             scope.launch {
                                 when {
-                                    !sendToClaude -> repo.addItem(
-                                        sectionId = selectedSection.id,
-                                        text = text,
-                                        dueAt = schedule.dueAt,
-                                        repeatWeeks = schedule.repeatWeeks,
-                                    )
+                                    !sendToClaude -> {
+                                        val id = repo.addItem(
+                                            sectionId = selectedSection.id,
+                                            text = text,
+                                            dueAt = schedule.dueAt,
+                                            repeatWeeks = schedule.repeatWeeks,
+                                        )
+                                        freshIds = freshIds + id
+                                    }
                                     claudeSection != null -> repo.addItem(claudeSection.id, text)
                                     // Nowhere to file the receipt, so the note is pushed
                                     // without being stored at all.
@@ -474,7 +509,6 @@ private fun ChannelHeader(
     accent: Color,
     railCollapsed: Boolean,
     onToggleRail: () -> Unit,
-    onScan: () -> Unit,
     onClear: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -556,13 +590,6 @@ private fun ChannelHeader(
             }
         }
 
-        IconButton(onClick = onScan) {
-            Icon(
-                painter = painterResource(R.drawable.ic_photo_camera),
-                contentDescription = "Scan recipe",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
         Box {
             IconButton(onClick = { menuOpen = true }) {
                 Icon(
@@ -927,6 +954,7 @@ private fun ItemsList(
     canMove: Boolean,
     isClaudeSection: Boolean,
     now: Long,
+    freshIds: Set<Long>,
     onMoveRequested: (Item) -> Unit,
     onEditTimerRequested: (Item) -> Unit,
     modifier: Modifier = Modifier,
@@ -965,6 +993,30 @@ private fun ItemsList(
         }
     }
 
+    // Bring the newest addition into view once it's in the list — the add and the Room emission
+    // race, so wait for it rather than assuming. Rendered index: active rows, the divider, then
+    // waiting ones. The first fresh row in that order is the topmost of a scanned batch.
+    val currentNow by rememberUpdatedState(now)
+    LaunchedEffect(freshIds) {
+        if (freshIds.isEmpty()) return@LaunchedEffect
+        val index = withTimeoutOrNull(1_000) {
+            snapshotFlow {
+                val (a, w) = orderedItems.partition { !it.isWaiting(currentNow) }
+                val inActive = a.indexOfFirst { it.id in freshIds }
+                val inWaiting = w.indexOfFirst { it.id in freshIds }
+                when {
+                    inActive >= 0 -> inActive
+                    inWaiting >= 0 -> a.size + 1 + inWaiting
+                    else -> -1
+                }
+            }.first { it >= 0 }
+        } ?: return@LaunchedEffect
+        val visible = lazyListState.layoutInfo.visibleItemsInfo
+        val first = visible.firstOrNull()?.index ?: 0
+        val last = visible.lastOrNull()?.index ?: 0
+        if (index < first || index > last) lazyListState.animateScrollToItem(index)
+    }
+
     // The open/done counts moved to the channel header, so the list is now the whole surface.
     LazyColumn(
         state = lazyListState,
@@ -976,6 +1028,7 @@ private fun ItemsList(
                     item = item,
                     accent = accent,
                     now = now,
+                    isFresh = item.id in freshIds,
                     isDragging = isDragging,
                     canMove = canMove,
                     isClaudeSection = isClaudeSection,
@@ -1022,6 +1075,7 @@ private fun ItemsList(
                 item = item,
                 accent = accent,
                 now = now,
+                isFresh = item.id in freshIds,
                 isDragging = false,
                 canMove = canMove,
                 isClaudeSection = isClaudeSection,
@@ -1082,6 +1136,7 @@ private fun ItemRow(
     item: Item,
     accent: Color,
     now: Long,
+    isFresh: Boolean,
     isDragging: Boolean,
     canMove: Boolean,
     isClaudeSection: Boolean,
@@ -1133,6 +1188,19 @@ private fun ItemRow(
         // every section, and nine saturated accents would make it read as the section.
         isDue -> DUE_COLOR.copy(alpha = 0.07f).compositeOver(MaterialTheme.colorScheme.surface)
         else -> MaterialTheme.colorScheme.surface
+    }
+
+    // Read only in the draw phase below, so the flash redraws the row without recomposing it.
+    val glow = remember { Animatable(0f) }
+    val glowColor = MaterialTheme.colorScheme.onSurface
+    LaunchedEffect(isFresh) {
+        if (isFresh) {
+            glow.animateTo(1f, tween(FRESH_RISE_MS, easing = LinearOutSlowInEasing))
+            delay(FRESH_HOLD_MS)
+            glow.animateTo(0f, tween(FRESH_FADE_MS, easing = LinearOutSlowInEasing))
+        } else {
+            glow.snapTo(0f)
+        }
     }
 
     var editing by rememberSaveable(item.id) { mutableStateOf(false) }
@@ -1188,6 +1256,8 @@ private fun ItemRow(
                 .fillMaxWidth()
                 .background(bg)
                 .drawBehind {
+                    // Over the background, under the content and the due bar.
+                    if (glow.value > 0f) drawRect(glowColor.copy(alpha = FRESH_ALPHA * glow.value))
                     if (isDue) {
                         drawRect(
                             color = DUE_COLOR,
@@ -1581,7 +1651,7 @@ private fun openLink(context: android.content.Context, url: String?) {
 
 /**
  * Boxed composer with its own tool rail — the redesign's one structural claim about adding.
- * The bottom toolbar is gone: scan lives here and in the header, per-section actions moved to
+ * The bottom toolbar is gone: scan lives here (and only here), per-section actions moved to
  * the header menu, and per-item actions moved onto the rows.
  *
  * Only actions that exist are shown. The mockup's link and voice buttons had nothing behind

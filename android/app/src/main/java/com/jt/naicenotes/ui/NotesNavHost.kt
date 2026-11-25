@@ -11,8 +11,9 @@ import androidx.navigation.navArgument
 import com.jt.naicenotes.ui.home.HomeScreen
 import com.jt.naicenotes.ui.scan.ScanRecipeScreen
 
-/** Result key: the section a recipe scan just filled, so Home can switch to it. */
+/** Result keys: the section a recipe scan just filled and the notes it added, so Home can switch to it and highlight them. */
 private const val SCANNED_SECTION_KEY = "scannedSectionId"
+private const val SCANNED_ITEMS_KEY = "scannedItemIds"
 
 private object Routes {
     const val HOME = "home"
@@ -29,10 +30,17 @@ fun NotesNavHost(initialSectionId: Long? = null) {
             val scannedSectionId by entry.savedStateHandle
                 .getStateFlow<Long?>(SCANNED_SECTION_KEY, null)
                 .collectAsStateWithLifecycle()
+            val scannedItemIds by entry.savedStateHandle
+                .getStateFlow<LongArray?>(SCANNED_ITEMS_KEY, null)
+                .collectAsStateWithLifecycle()
             HomeScreen(
                 initialSectionId = initialSectionId,
                 jumpToSectionId = scannedSectionId,
-                onJumped = { entry.savedStateHandle[SCANNED_SECTION_KEY] = null },
+                jumpHighlightIds = scannedItemIds?.toSet().orEmpty(),
+                onJumped = {
+                    entry.savedStateHandle[SCANNED_SECTION_KEY] = null
+                    entry.savedStateHandle[SCANNED_ITEMS_KEY] = null
+                },
                 onScan = { sectionId ->
                     navController.navigate(Routes.scan(sectionId))
                 },
@@ -52,7 +60,9 @@ fun NotesNavHost(initialSectionId: Long? = null) {
             ScanRecipeScreen(
                 initialSectionId = sectionId,
                 onClose = { navController.popBackStack() },
-                onAdded = { target ->
+                onAdded = { target, itemIds ->
+                    // Ids first: Home acts when the section key arrives and reads them then.
+                    navController.previousBackStackEntry?.savedStateHandle?.set(SCANNED_ITEMS_KEY, itemIds.toLongArray())
                     navController.previousBackStackEntry?.savedStateHandle?.set(SCANNED_SECTION_KEY, target)
                     navController.popBackStack()
                 },

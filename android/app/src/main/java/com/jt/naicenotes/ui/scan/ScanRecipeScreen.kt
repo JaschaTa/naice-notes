@@ -94,7 +94,7 @@ private data class EditableIngredient(val text: String, val include: Boolean = t
 fun ScanRecipeScreen(
     initialSectionId: Long?,
     onClose: () -> Unit,
-    onAdded: (sectionId: Long) -> Unit,
+    onAdded: (sectionId: Long, itemIds: List<Long>) -> Unit,
 ) {
     val context = LocalContext.current
     val repo = rememberRepository()
@@ -215,8 +215,8 @@ fun ScanRecipeScreen(
                         val toAdd = s.items.filter { it.include && it.text.isNotBlank() }.map { it.text.trim() }
                         if (target != null && toAdd.isNotEmpty()) {
                             scope.launch {
-                                repo.bulkAddItems(target, toAdd)
-                                onAdded(target)
+                                val ids = repo.bulkAddItems(target, toAdd)
+                                onAdded(target, ids)
                             }
                         }
                     },

@@ -20,7 +20,9 @@ export interface ItemActions {
  * Active notes, then a "NOT DUE YET" divider and the waiting ones — split once, on one `now`, so a
  * row lands in exactly one block. Only the active block can be dragged.
  */
-export function ItemList({ items, now, actions }: { items: Item[]; now: number; actions: ItemActions }) {
+export function ItemList({ items, now, actions, fresh }: {
+  items: Item[]; now: number; actions: ItemActions; fresh: ReadonlySet<string>
+}) {
   const active = items.filter((i) => !isWaiting(i, now))
   const waiting = items.filter((i) => isWaiting(i, now))
   const { bind, drag, swipe, offsetFor } = useRowGestures({
@@ -34,14 +36,29 @@ export function ItemList({ items, now, actions }: { items: Item[]; now: number; 
     },
   })
 
+  // Bring the newest addition into view once it has rendered — once per batch, so the list
+  // doesn't jump back to it while the glow is still running. The first fresh id in rendered
+  // order is the topmost of a scanned batch.
+  const listRef = useRef<HTMLDivElement>(null)
+  const scrolledFor = useRef<ReadonlySet<string> | null>(null)
+  useEffect(() => {
+    if (fresh.size === 0 || scrolledFor.current === fresh) return
+    const first = [...active, ...waiting].find((i) => fresh.has(i.id))
+    if (!first) return
+    scrolledFor.current = fresh
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+    listRef.current?.querySelector(`[data-id="${CSS.escape(first.id)}"]`)
+      ?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' })
+  })
+
   const row = (item: Item) => (
-    <Row key={item.id} item={item} now={now} actions={actions} bind={bind(item.id)}
+    <Row key={item.id} item={item} now={now} actions={actions} bind={bind(item.id)} fresh={fresh.has(item.id)}
       dy={offsetFor(item.id)} dragging={drag?.id === item.id} anyDragging={!!drag}
       dx={swipe?.id === item.id ? swipe.dx : 0} />
   )
 
   return (
-    <div class="list">
+    <div class="list" ref={listRef}>
       {active.map(row)}
       {waiting.length > 0 && <div class="not-due">NOT DUE YET</div>}
       {waiting.map(row)}
@@ -49,19 +66,19 @@ export function ItemList({ items, now, actions }: { items: Item[]; now: number; 
   )
 }
 
-function Row({ item, now, actions, bind, dy, dx, dragging, anyDragging }: {
+function Row({ item, now, actions, bind, dy, dx, dragging, anyDragging, fresh }: {
   item: Item; now: number; actions: ItemActions; bind: object
-  dy: number; dx: number; dragging: boolean; anyDragging: boolean
+  dy: number; dx: number; dragging: boolean; anyDragging: boolean; fresh: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const due = isDue(item, now)
   const waiting = isWaiting(item, now)
-  const cls = ['row', item.isChecked && 'checked', due && 'due', waiting && 'waiting', dragging && 'dragging'].filter(Boolean).join(' ')
+  const cls = ['row', item.isChecked && 'checked', due && 'due', waiting && 'waiting', dragging && 'dragging', fresh && 'fresh'].filter(Boolean).join(' ')
   const transform = dx ? `translateX(${dx}px)` : dy ? `translateY(${dy}px)` : undefined
 
   return (
     // Clip only while swiping; otherwise the schedule tooltip must be able to overflow the row.
-    <div class="row-wrap" style={{ zIndex: dragging ? 3 : undefined, overflow: dx ? 'hidden' : 'visible' }}>
+    <div class="row-wrap" data-id={item.id} style={{ zIndex: dragging ? 3 : undefined, overflow: dx ? 'hidden' : 'visible' }}>
       {dx !== 0 && <div class={dx > 0 ? 'swipe-bg left' : 'swipe-bg'}>Delete</div>}
       <div {...bind} class={cls}
         style={{ transform, transition: anyDragging && !dragging ? 'transform .15s' : dx ? 'none' : undefined }}>

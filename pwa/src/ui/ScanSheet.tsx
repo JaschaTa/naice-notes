@@ -21,7 +21,7 @@ type State =
  */
 export function ScanSheet({ file, sections, initialSectionId, scanner, notes, onPickAnother, onAdded, onClose }: {
   file: File; sections: Section[]; initialSectionId: string | null; scanner: ScanRemote; notes: Notes
-  onPickAnother: () => void; onAdded: (sectionId: string, count: number) => void; onClose: () => void
+  onPickAnother: () => void; onAdded: (sectionId: string, itemIds: string[]) => void; onClose: () => void
 }) {
   const [state, setState] = useState<State>({ kind: 'scanning' })
   const [preview, setPreview] = useState<string | null>(null)
@@ -86,8 +86,8 @@ export function ScanSheet({ file, sections, initialSectionId, scanner, notes, on
   async function add() {
     if (!target || chosen.length === 0) return
     setBusy(true)
-    await notes.addItems(target.id, chosen)
-    onAdded(target.id, chosen.length)
+    const added = await notes.addItems(target.id, chosen)
+    onAdded(target.id, added.map((i) => i.id))
     onClose()
   }
 

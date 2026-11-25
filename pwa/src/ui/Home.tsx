@@ -24,6 +24,9 @@ type Open =
   | { kind: 'itemMenu'; item: Item } | { kind: 'timer'; item: Item } | { kind: 'move'; item: Item } | { kind: 'account' }
   | { kind: 'share'; step?: ShareStep } | { kind: 'scan'; file: File }
 
+/** How long a new note stays marked: the CSS flash (`.row.fresh`, 0.7s) plus a little slack. */
+const FRESH_MS = 1000
+
 const pref = {
   get: (k: string) => localStorage.getItem(`naice.${k}`),
   set: (k: string, v: string | null) => (v == null ? localStorage.removeItem(`naice.${k}`) : localStorage.setItem(`naice.${k}`, v)),
@@ -45,6 +48,16 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
   const [snack, setSnack] = useState<SnackbarMessage | null>(null)
   const [status, setStatus] = useState<SyncStatus>({ state: 'idle', lastSyncedAt: null })
   useEffect(() => engine.onStatus(setStatus), [engine])
+  // Notes this device just added glow briefly so you can see where they landed. Ids accumulate
+  // and are dropped together once the newest has had its full glow, so a quick second add
+  // doesn't cut the first one's short.
+  const [fresh, setFresh] = useState<ReadonlySet<string>>(() => new Set())
+  const markFresh = (ids: string[]) => setFresh((prev) => new Set([...prev, ...ids]))
+  useEffect(() => {
+    if (fresh.size === 0) return
+    const t = setTimeout(() => setFresh(new Set()), FRESH_MS)
+    return () => clearTimeout(t)
+  }, [fresh])
 
   const counts = countsBySection(allItems, now)
   const totals = totalsBySection(allItems)
@@ -116,9 +129,9 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
               </div>
               <button class="icon-btn" aria-label="Section menu" onClick={() => setOpen({ kind: 'sectionMenu' })}><MoreVert size={22} /></button>
             </header>
-            <ItemList items={items} now={now} actions={actions} />
+            <ItemList items={items} now={now} actions={actions} fresh={fresh} />
             <Composer key={section.id} section={section}
-              onSubmit={(text, s) => void notes.addItem(section.id, text, s)} onScan={pickPhoto} />
+              onSubmit={(text, s) => void notes.addItem(section.id, text, s).then((it) => markFresh([it.id]))} onScan={pickPhoto} />
           </>
         ) : (
           <div class="empty">
@@ -194,8 +207,10 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
       {open?.kind === 'scan' && (
         <ScanSheet file={open.file} sections={sections} initialSectionId={section?.id ?? null} scanner={session.scan} notes={notes}
           onPickAnother={pickPhoto} onClose={close}
-          onAdded={(id, n) => {
+          onAdded={(id, ids) => {
+            const n = ids.length
             select(id)
+            markFresh(ids)
             toast(`Added ${n} ${n === 1 ? 'item' : 'items'} to ${sections.find((s) => s.id === id)?.name ?? 'the section'}`)
           }} />
       )}
