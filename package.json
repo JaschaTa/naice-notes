@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "description": "Repo-root tooling only: pins the Supabase CLI so npx supabase runs one fixed binary (stable macOS keychain approval).",
+  "devDependencies": {
+    "supabase": "3.4.0"
+  }
+}
