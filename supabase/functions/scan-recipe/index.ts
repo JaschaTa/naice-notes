@@ -24,7 +24,9 @@ Rules:
 - Keep short qualifiers that matter when shopping ("weiche Butter", "rote Zwiebel"), drop preparation steps and serving suggestions.
 - If the recipe has sub-lists (dough, filling, sauce), include every ingredient once per sub-list in reading order; do not add the sub-list headings.
 - No steps, no headings, no notes, no numbering or bullets.
-- If the image contains no recipe ingredients, return an empty list.`
+- If the image contains no recipe ingredients, return an empty list.
+
+Answer with JSON only: {"ingredients": ["...", "..."]}`
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -86,11 +88,14 @@ Deno.serve(async (req) => {
       signal: AbortSignal.timeout(TIMEOUT_MS),
       body: JSON.stringify({
         model,
-        temperature: 0,
+        // No temperature, and no provider.require_parameters: Vertex's Gemini 3 endpoints don't
+        // take temperature, and requiring every parameter left no endpoint at all once the
+        // account's ZDR setting had excluded AI Studio (404 "No endpoints found that can handle
+        // the requested parameters"). The schema is best-effort; the prompt asks for JSON too.
         max_tokens: 4000,
         // Reading a list off a photo needs little thinking; low keeps a scan to a few seconds.
         reasoning: { effort: 'low' },
-        provider: { data_collection: 'deny', require_parameters: true },
+        provider: { data_collection: 'deny' },
         response_format: {
           type: 'json_schema',
           json_schema: {
@@ -123,7 +128,7 @@ Deno.serve(async (req) => {
 
   const body = await res.json().catch(() => null)
   if (!res.ok || !body || body.error) {
-    console.error('scan-recipe: upstream error', res.status, JSON.stringify(body?.error ?? body).slice(0, 500))
+    console.error('scan-recipe: upstream error', res.status, JSON.stringify(body?.error ?? body).slice(0, 2000))
     return reply(502, { error: 'the scan service failed, try again' })
   }
 

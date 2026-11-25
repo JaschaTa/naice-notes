@@ -31,3 +31,6 @@ keystore.properties
 
 # Node (supabase/test, pwa)
 node_modules/
+
+# Playwright MCP screenshots and snapshots from browser checks
+.playwright-mcp/
