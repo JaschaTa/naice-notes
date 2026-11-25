@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Reviews a Naice Notes change that touches sync, sharing, Supabase RLS/migrations/Edge Functions, or secrets. Blocks only on a concrete exploit (attacker + entry point + damage); everything else goes to the hardening list. Returns RELEASABLE or NOT RELEASABLE. Use after a step of the review loop (docs/review-loop.md) that touched those areas.
+description: Runs automatically when a change touches sync, sharing, RLS/migrations, Edge Functions or secrets.
 disallowedTools: Edit, Write, NotebookEdit
 ---
 
