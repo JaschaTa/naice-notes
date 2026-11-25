@@ -144,6 +144,15 @@ class SyncController(
 
     suspend fun people(): List<com.jt.naicenotes.data.sync.SpacePerson> = client.spacePeople()
 
+    /**
+     * The ingredients on a recipe photo, via the scan-recipe Edge Function. Online-only like
+     * sharing, and it needs a session; the caller adds what comes back through the repository,
+     * so the new items sync like any other. Failures carry the raw cause — see [scanError].
+     */
+    suspend fun scanRecipe(jpeg: ByteArray): Result<List<String>> =
+        runCatching { client.scanRecipe(jpeg) }
+            .onFailure { Log.w(TAG, "Recipe scan failed — ${it::class.java.simpleName}: ${it.message}") }
+
     suspend fun share(section: Section, email: String) {
         syncOrThrow()
         val to = email.trim().lowercase()

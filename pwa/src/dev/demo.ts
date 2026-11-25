@@ -41,7 +41,14 @@ export async function startDemoSession(): Promise<Session> {
     { spaceId: SHARED_WITH_ME, email: 'partner@example.com', role: 'owner', joined: true },
     { spaceId: SHARED_WITH_ME, email: 'demo@example.com', role: 'member', joined: true },
   ] }, store, engine)
-  return { userId: 'demo', email: 'demo@example.com', store, engine, notes, sharing, close: () => store.close() }
+  // Stands in for the scan-recipe function: a pause, then a plausible list.
+  const scan = {
+    scan: async () => {
+      await new Promise((r) => setTimeout(r, 1800))
+      return ['250 g Spaghetti', '2 Knoblauchzehen', '400 g gehackte Tomaten', '1 EL Olivenöl', 'Basilikum', 'Parmesan']
+    },
+  }
+  return { userId: 'demo', email: 'demo@example.com', store, engine, notes, sharing, scan, close: () => store.close() }
 }
 
 async function seed(store: Store) {

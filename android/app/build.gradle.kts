@@ -32,17 +32,7 @@ android {
         if (localPropsFile.exists()) {
             localPropsFile.inputStream().use { localProps.load(it) }
         }
-        buildConfigField(
-            "String",
-            "RECIPE_SCAN_URL",
-            "\"${localProps.getProperty("RECIPE_SCAN_URL", "")}\"",
-        )
-        buildConfigField(
-            "String",
-            "RECIPE_SCAN_SECRET",
-            "\"${localProps.getProperty("RECIPE_SCAN_SECRET", "")}\"",
-        )
-        // Vault task-inbox push. Its own secret, never the recipe-scan one: reusing a
+        // Vault task-inbox push. Its secret is used for this webhook only: reusing a
         // token across webhooks is prohibited by the company webhook-security rules.
         buildConfigField(
             "String",
@@ -54,7 +44,7 @@ android {
             "INBOX_PUSH_JWT_SECRET",
             "\"${localProps.getProperty("INBOX_PUSH_JWT_SECRET", "")}\"",
         )
-        // Supabase sync. Not secrets (row-level security is the boundary), but the public
+        // Supabase sync, which recipe scan also goes through. Not secrets (row-level security is the boundary), but the public
         // repo shouldn't name the project. Blank → sync reports itself unconfigured.
         buildConfigField(
             "String",

@@ -10,7 +10,7 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 # → app/build/outputs/apk/debug/app-debug.apk
 ```
 
-`local.properties` holds the SDK path plus two webhook configs — recipe scan (`RECIPE_SCAN_URL`, `RECIPE_SCAN_SECRET`) and vault task inbox (`INBOX_PUSH_URL`, `INBOX_PUSH_JWT_SECRET`). It's gitignored, and this repo is public, so **no URL or secret may ever be committed**. A missing key becomes `""` and the matching feature reports itself unconfigured rather than failing at the call site: without it the app still builds, only the scan button and the inbox push degrade. The two secrets must stay distinct — reusing one token across webhooks is prohibited by the company webhook-security rules.
+`local.properties` holds the SDK path, the Supabase sync config (`SUPABASE_URL`, `SUPABASE_ANON_KEY`) and the vault task inbox webhook (`INBOX_PUSH_URL`, `INBOX_PUSH_JWT_SECRET`). It's gitignored, and this repo is public, so **no URL or secret may ever be committed**. A missing key becomes `""` and the matching feature reports itself unconfigured rather than failing at the call site: without it the app still builds, only sync, recipe scan (which goes through sync, see "Recipe scan" below) and the inbox push degrade. The inbox secret is for that webhook only — reusing one token across webhooks is prohibited by the company webhook-security rules.
 
 ## Testing on the emulator
 
@@ -214,7 +214,7 @@ It's a receipt log, not a list: rows have no ⋮ menu and can't be ticked, edite
 
 Moving an existing note into the Claude section does **not** push it. `moveItemToSection` deliberately doesn't fire `onInboxItem`: `pushedAt` records whether a note ever reached the vault, and re-pushing on every move would duplicate tasks. So the only way to send something is to create it there.
 
-The mechanism deliberately copies link previews: `onInboxItem` is a repository callback in the same shape as `onLinkDetected`, so composer, share target and widget quick-add all push without any of them knowing. `InboxPushClient` mirrors `RecipeScanClient`, and `retryPendingInboxPushes()` sits next to `retryMissingLinkPreviews()` in `onCreate`.
+The mechanism deliberately copies link previews: `onInboxItem` is a repository callback in the same shape as `onLinkDetected`, so composer, share target and widget quick-add all push without any of them knowing. `InboxPushClient` is a plain OkHttp client with a blank-means-unconfigured URL, and `retryPendingInboxPushes()` sits next to `retryMissingLinkPreviews()` in `onCreate`.
 
 Two things that differ from link previews, both on purpose:
 
@@ -222,6 +222,14 @@ Two things that differ from link previews, both on purpose:
 - **Auth is a signed JWT, not a static header secret.** `JwtSigner` hand-rolls HS256 (~15 lines, no library) and mints a fresh short-lived token per request — including on the retry path, which must never reuse a stored token or it arrives expired. Company rules rank JWT above a static bearer secret for callers we control. Note the honest limit: a secret inside a sideloaded APK is extractable, so what expiry buys is bounded replay, not secrecy.
 
 Item identity for the webhook's duplicate check is `inboxDedupeKey(id, createdAt)` — immutable fields only, so editing a note before a retry lands doesn't make it look like a new capture. `InboxPushTest` locks this.
+
+## Recipe scan
+
+`ScanRecipeScreen` opens the photo picker, downscales with `ImageProcessor` (≤1024 px, JPEG 85) and calls `SyncController.scanRecipe`, which posts the image base64 in JSON to the Edge Function `scan-recipe` with the sync session (`SupabaseClient.scanRecipe`, same `authorized` refresh-and-retry as every other call). The function calls a vision model through OpenRouter; setup and privacy settings are in `../supabase/README.md`. The PWA has the same flow (`pwa/src/ui/ScanSheet.tsx`), same wording.
+
+- **It needs a sync session.** Signed out (or a build without `SUPABASE_URL`), the screen says "Sign in to sync to scan recipes." — `scanError` maps every failure to a human message and the raw cause goes to logcat.
+- **Its own OkHttp client with 60 s timeouts** (`scanClient`, derived from the sync client): the model takes several seconds, while sync calls keep the 30 s ones so a dead connection doesn't stall a sync run.
+- Until 2026-11-25 this went to an n8n webhook in the work environment with a static `X-Auth` secret; `RECIPE_SCAN_URL`/`RECIPE_SCAN_SECRET` are gone from `local.properties`.
 
 ## Android sync
 

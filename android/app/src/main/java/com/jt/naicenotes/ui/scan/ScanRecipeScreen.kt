@@ -72,11 +72,11 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import com.jt.naicenotes.BuildConfig
 import com.jt.naicenotes.R
 import com.jt.naicenotes.data.entity.Section
-import com.jt.naicenotes.data.remote.RecipeScanClient
+import com.jt.naicenotes.data.sync.scanError
 import com.jt.naicenotes.data.util.ImageProcessor
+import com.jt.naicenotes.ui.util.rememberApp
 import com.jt.naicenotes.ui.util.rememberRepository
 import kotlinx.coroutines.launch
 
@@ -111,7 +111,8 @@ fun ScanRecipeScreen(
         }
     }
 
-    val client = remember { RecipeScanClient(BuildConfig.RECIPE_SCAN_URL, BuildConfig.RECIPE_SCAN_SECRET) }
+    // The scan-recipe Edge Function, called with the sync session (supabase/README.md).
+    val sync = rememberApp().sync
 
     fun runScan(uri: Uri) {
         state = ScanUiState.Scanning(uri)
@@ -119,7 +120,7 @@ fun ScanRecipeScreen(
             val bytes = runCatching { ImageProcessor.loadAndDownscale(context, uri) }
             bytes.fold(
                 onSuccess = { jpeg ->
-                    val result = client.scan(jpeg)
+                    val result = sync.scanRecipe(jpeg)
                     result.fold(
                         onSuccess = { ingredients ->
                             state = if (ingredients.isEmpty()) {
@@ -129,7 +130,7 @@ fun ScanRecipeScreen(
                             }
                         },
                         onFailure = { e ->
-                            state = ScanUiState.Failed(e.message ?: "Scan failed.")
+                            state = ScanUiState.Failed(scanError(e))
                         },
                     )
                 },

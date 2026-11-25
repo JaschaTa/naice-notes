@@ -260,6 +260,20 @@ describe('sync between two devices', () => {
     expect(await texts(a.notes, s.id)).toEqual(['three', 'two', 'one'])
   })
 
+  it('adds a scanned list on top, in order, and syncs it', async () => {
+    const a = await device(server, 'alice')
+    const b = await device(server, 'bob')
+    const s = await a.notes.addSection('home', 'Groceries')
+    await a.notes.addItem(s.id, 'Milk')
+    await a.notes.addItems(s.id, ['200 g Mehl', '2 Eier', 'https://example.com/rezept'])
+    expect(await texts(a.notes, s.id)).toEqual(['200 g Mehl', '2 Eier', 'https://example.com/rezept', 'Milk'])
+    expect((await a.notes.items(s.id))[2].linkUrl).toBe('https://example.com/rezept')
+    expect(await a.notes.addItems(s.id, [])).toEqual([])
+    await a.engine.sync()
+    await b.engine.sync()
+    expect(await texts(b.notes, s.id)).toEqual(['200 g Mehl', '2 Eier', 'https://example.com/rezept', 'Milk'])
+  })
+
   it('reads a space in full when joining it after the cursor moved on', async () => {
     const a = await device(server, 'alice')
     const b = await device(server, 'bob')

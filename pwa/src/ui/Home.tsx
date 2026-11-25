@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useRef, useState } from 'preact/hooks'
 import type { Item, Section } from '../data/model.ts'
 import { bySortKey } from '../data/model.ts'
 import { cssColor } from '../data/notes.ts'
@@ -9,6 +9,7 @@ import { MoreVert } from './icons.tsx'
 import { Composer } from './Composer.tsx'
 import { ItemList, type ItemActions } from './ItemList.tsx'
 import { Rail } from './Rail.tsx'
+import { ScanSheet } from './ScanSheet.tsx'
 import { ScheduleSheet } from './ScheduleSheet.tsx'
 import { ShareSheet, type SectionRole, type ShareStep } from './ShareSheet.tsx'
 import { ClearSheet, MoveSheet, SectionSheet } from './SectionSheets.tsx'
@@ -21,7 +22,7 @@ import { useNow } from './useNow.ts'
 type Open =
   | { kind: 'sectionMenu' } | { kind: 'newSection' } | { kind: 'editSection' } | { kind: 'clear' } | { kind: 'deleteSection' }
   | { kind: 'itemMenu'; item: Item } | { kind: 'timer'; item: Item } | { kind: 'move'; item: Item } | { kind: 'account' }
-  | { kind: 'share'; step?: ShareStep }
+  | { kind: 'share'; step?: ShareStep } | { kind: 'scan'; file: File }
 
 const pref = {
   get: (k: string) => localStorage.getItem(`naice.${k}`),
@@ -62,6 +63,10 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
   function select(id: string) { setSelected(id); pref.set('section', id) }
   function toggleRail() { const next = !collapsed; setCollapsed(next); pref.set('railCollapsed', next ? '1' : null) }
   const toast = (text: string, action?: SnackbarMessage['action']) => setSnack({ id: Date.now(), text, action })
+  // One hidden picker for every scan entry point. iOS only opens it from inside the tap that
+  // asked, so this is clicked synchronously from the button or menu handler, never from an effect.
+  const photoInput = useRef<HTMLInputElement>(null)
+  const pickPhoto = () => photoInput.current?.click()
 
   const actions: ItemActions = {
     toggle: (item) => void notes.toggleItem(item),
@@ -113,7 +118,7 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
             </header>
             <ItemList items={items} now={now} actions={actions} />
             <Composer key={section.id} section={section}
-              onSubmit={(text, s) => void notes.addItem(section.id, text, s)} />
+              onSubmit={(text, s) => void notes.addItem(section.id, text, s)} onScan={pickPhoto} />
           </>
         ) : (
           <div class="empty">
@@ -127,6 +132,7 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
 
       {open?.kind === 'sectionMenu' && section && (
         <MenuSheet title={section.name} onClose={close} entries={[
+          { label: 'Scan recipe…', onSelect: pickPhoto },
           { label: 'Clear…', onSelect: () => setOpen({ kind: 'clear' }) },
           { label: 'Edit section', onSelect: () => setOpen({ kind: 'editSection' }) },
           { label: role === 'private' ? 'Share…' : 'Sharing…', onSelect: () => setOpen({ kind: 'share' }) },
@@ -184,6 +190,20 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
           </div>
         </Sheet>
       )}
+
+      {open?.kind === 'scan' && (
+        <ScanSheet file={open.file} sections={sections} initialSectionId={section?.id ?? null} scanner={session.scan} notes={notes}
+          onPickAnother={pickPhoto} onClose={close}
+          onAdded={(id, n) => {
+            select(id)
+            toast(`Added ${n} ${n === 1 ? 'item' : 'items'} to ${sections.find((s) => s.id === id)?.name ?? 'the section'}`)
+          }} />
+      )}
+      <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => {
+        const file = e.currentTarget.files?.[0]
+        e.currentTarget.value = '' // so picking the same photo again still fires
+        if (file) setOpen({ kind: 'scan', file })
+      }} />
 
       <Snackbar message={snack} onDone={() => setSnack(null)} />
     </div>

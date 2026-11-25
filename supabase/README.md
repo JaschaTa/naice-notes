@@ -18,7 +18,11 @@ Expected-failure tests pass on *any* error, so after changing a policy or guard 
 
 ## Working with the live project
 
-The CLI runs through `npx` (no install). It needs `npx supabase login` once — in a real terminal,
+The CLI is pinned in the repo-root `package.json` (run `npm install` there once); `npx supabase`
+from the repo root or `android/` uses that copy. Pinning keeps one fixed binary, so macOS's
+"Always Allow" on the keychain prompt sticks until the version is bumped (then approve once more).
+Don't run it from `pwa/`, which has its own `package.json` without the CLI and would fall back
+to an unpinned npx download. It needs `npx supabase login` once — in a real terminal,
 the browser flow fails without a TTY — plus `SUPABASE_PROJECT_REF` and `SUPABASE_DB_PASSWORD`
 in the repo-root `.env` (git-ignored):
 
@@ -80,6 +84,36 @@ npx supabase functions deploy send-invite --remote="$SUPABASE_PROJECT_REF" --use
 ```
 
 Without the secrets the function answers 502 and the apps carry on (the share still worked).
+
+## Recipe scan (Edge Function `scan-recipe`)
+
+`functions/scan-recipe/index.ts` reads the ingredient list off a recipe photo for both apps. They send
+`{"image": "<base64 JPEG, ≤1024 px>"}` with the user's session and get back `{"ingredients": [...]}`,
+which they show for review and then add as ordinary items. Nothing is stored here. Only signed-in
+users can call it, and sign-up is invite-only, so it can't be used as an open proxy to the model.
+
+The model is reached through OpenRouter (`google/gemini-3.5-flash-lite` on Vertex by default, set
+`RECIPE_SCAN_MODEL` to override). That costs about $0.001 per scan. The model must have an
+endpoint the account's ZDR setting allows: `gemini-2.5-flash` exists only on AI Studio and fails
+with 404 "ZDR violation", which the function logs. The API key is the secret
+`OPENROUTER_API_KEY`, kept in the root `.env` like the SMTP ones:
+
+```bash
+set -a && . ./.env && set +a
+SUPABASE_YES=1 npx supabase secrets set --remote="$SUPABASE_PROJECT_REF" OPENROUTER_API_KEY="$OPENROUTER_API_KEY"   # once
+SUPABASE_YES=1 npx supabase functions deploy scan-recipe --remote="$SUPABASE_PROJECT_REF" --use-api
+```
+
+Without the key the function answers 502 and the apps show "Scan failed". Each call logs model,
+provider and token usage, but never the image or the extracted text.
+
+Privacy is set on the OpenRouter account, not per request:
+- Zero Data Retention is on for all models.
+- Google is set to "Allow Safety Retention", because "ZDR only" makes most Gemini models
+  unavailable. With that setting OpenRouter routes to Vertex, which may keep requests to detect
+  abuse but doesn't train on them.
+- Requests also send `data_collection: "deny"`.
+- Give the key a credit limit, so a leaked key can't run up a bill.
 
 ## Sync contract (for both clients)
 

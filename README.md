@@ -19,20 +19,16 @@ The Android app is built for Android 14+ (API 34), targeted at a Samsung S24 sid
 - **Timed and recurring notes** — give a note a due date, a repeat interval, or both. Until it's due it waits below a divider at the bottom of its section, greyed out and counted towards nothing; once due it rejoins the list with an amber marker. Tapping its glyph shows when it's due and offers the one action that state allows — bring it forward, drop the date, or restart the cycle. Nothing runs in the background: due-ness is worked out when the list is drawn
 - **Link previews** — share a URL to the app and it fetches the page's Open Graph title and image in the background, falling back to a readable label derived from the URL when a site blocks metadata fetches
 - **Home-screen widget** — mirrors a chosen section, tap to toggle items, "+" for quick-add, tap the logo to open the app at that section, and the same emoji tiles to switch sections. Classic `AppWidgetProvider` + `RemoteCollectionItems` (API 31+) for atomic, flash-free updates
-- **Recipe scan** — pick a recipe photo, the app sends it to a private n8n webhook which proxies a multimodal LLM, returns extracted ingredient strings, the app shows a review screen before appending to a section
+- **Recipe scan** — pick or take a recipe photo (Android and web), it goes to the `scan-recipe` Supabase Edge Function, which asks a vision model through OpenRouter for the ingredient lines; the app shows a review screen before appending them to a section
 - **Send to Claude** — a checkbox in the composer POSTs the note to a private n8n webhook that files it as a task, and keeps a receipt in a designated section. Also backed by a webhook I'm not publishing. Note that unlike the scan button, an unconfigured build fails quietly here: the note is still filed locally and the confirmation still appears, but nothing leaves the device
 
-## Recipe-scan backend (private)
+## Recipe-scan backend
 
-The recipe-scan flow depends on a personal n8n webhook that calls an LLM behind credentials I'm not publishing. If you build this repo without configuring `RECIPE_SCAN_URL` and `RECIPE_SCAN_SECRET` in `android/local.properties`, the rest of the app still works — only the "scan recipe" button surfaces a "not configured" message.
-
-To wire up your own backend, the shape the app expects is:
+Both apps call the Edge Function in `supabase/functions/scan-recipe` with the signed-in user's session, so scanning needs sync configured (`SUPABASE_URL` / `SUPABASE_ANON_KEY` in `android/local.properties`, `VITE_SUPABASE_*` for the PWA). The function holds the OpenRouter key as a Supabase secret; deploying it is described in `supabase/README.md`. Signed out, the scan button says to sign in to sync; the rest of the app works either way.
 
 | Request | Response |
 |---|---|
-| `POST` with multipart body containing `image` (JPEG) and header `X-Auth: <shared-secret>` | `200 {"ingredients": ["2 cups flour", "1 tsp salt", ...]}` |
-
-Any backend that satisfies that contract — n8n, a Cloud Function, a small server — will work. See `android/local.properties.example` for the two values the build needs.
+| `POST {"image": "<base64 JPEG, longest side ≤1024 px>"}` with `Authorization: Bearer <user access token>` | `200 {"ingredients": ["200 g Mehl", "2 Eier", ...]}` |
 
 ## Building
 
@@ -41,7 +37,7 @@ Requires Android Studio (Hedgehog or later) and JDK 17+.
 ```bash
 cd android
 cp local.properties.example local.properties
-# edit local.properties — fill in sdk.dir, and (optionally) the recipe-scan vars
+# edit local.properties — fill in sdk.dir, and (optionally) the Supabase vars for sync and recipe scan
 ./gradlew :app:assembleDebug
 ```
 

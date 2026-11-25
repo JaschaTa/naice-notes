@@ -20,6 +20,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.time.Instant
+import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 /** A signed-in session as GoTrue hands it out. [expiresAt] is epoch seconds. */
@@ -100,6 +101,12 @@ class SupabaseClient(
         .connectTimeout(15, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
+        .build()
+
+    /** A longer leash for the vision model behind scan-recipe; sync keeps the short one. */
+    private val scanClient = client.newBuilder()
+        .writeTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
         .build()
 
     private val json = Json {
@@ -254,6 +261,25 @@ class SupabaseClient(
         }
     }
 
+    /**
+     * The ingredient lines on a recipe photo (supabase/functions/scan-recipe), possibly none.
+     * [jpeg] is already downscaled by ImageProcessor; it goes up base64 in JSON, like the PWA's.
+     */
+    suspend fun scanRecipe(jpeg: ByteArray): List<String> {
+        val b = base ?: throw IllegalStateException("Sync isn't configured in this build")
+        val body = "{\"image\":\"${Base64.getEncoder().encodeToString(jpeg)}\"}"
+        val raw = authorized(scanClient) { token ->
+            Request.Builder()
+                .url(b.newBuilder().addPathSegments("functions/v1/scan-recipe").build())
+                .rest(token)
+                .post(body.toRequestBody(JSON))
+                .build()
+        }
+        return json.decodeFromString(ScanResponse.serializer(), raw).ingredients
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+    }
+
     /** Back into your personal space; the shared space and everyone else's access go. */
     suspend fun unshareSection(sectionUuid: String) {
         rpc("unshare_section", """{"p_section":${quote(sectionUuid)}}""")
@@ -330,12 +356,12 @@ class SupabaseClient(
         .header("Authorization", "Bearer $token")
 
     /** One retry with a forced refresh on 401: the access token can expire between check and use. */
-    private suspend fun authorized(build: (String) -> Request): String {
+    private suspend fun authorized(http: OkHttpClient = client, build: (String) -> Request): String {
         try {
-            return execute(build(accessToken()))
+            return execute(build(accessToken()), http)
         } catch (e: UnauthorizedException) {
             return try {
-                execute(build(accessToken(forceRefresh = true)))
+                execute(build(accessToken(forceRefresh = true)), http)
             } catch (e2: UnauthorizedException) {
                 throw RemoteException(e2.message ?: "unauthorized", permanent = false)
             }
@@ -344,9 +370,9 @@ class SupabaseClient(
 
     private class UnauthorizedException(message: String) : IOException(message)
 
-    private suspend fun execute(request: Request): String = withContext(Dispatchers.IO) {
+    private suspend fun execute(request: Request, http: OkHttpClient = client): String = withContext(Dispatchers.IO) {
         val response = try {
-            client.newCall(request).execute()
+            http.newCall(request).execute()
         } catch (e: IOException) {
             throw RemoteException("network: ${e.message}", permanent = false)
         }
@@ -389,6 +415,9 @@ class SupabaseClient(
     )
 
     @Serializable
+    private data class ScanResponse(val ingredients: List<String> = emptyList())
+
+    @Serializable
     private data class TokenUser(val id: String, val email: String? = null)
 
     private companion object {
@@ -421,6 +450,19 @@ fun sharingError(e: Throwable): String {
         m.contains("not an email address") -> "That doesn't look like an email address."
         m.contains("you already have access") -> "That's your own email address."
         else -> m.substringAfter(": ").ifBlank { "Something went wrong." }
+    }
+}
+
+/** A human message for a failed recipe scan, matching the PWA's wording. */
+fun scanError(e: Throwable): String {
+    val m = e.message.orEmpty()
+    return when {
+        // No session, or a build without SUPABASE_URL (IllegalStateException from scanRecipe).
+        e is SignedOutException || e is IllegalStateException -> "Sign in to sync to scan recipes."
+        e is RemoteException && m.startsWith("network:") -> "You're offline. Scanning needs a connection."
+        m.contains("HTTP 413") -> "That photo is too large."
+        m.contains("HTTP 504") -> "The scan service did not answer in time."
+        else -> "Scan failed. Try again."
     }
 }
 

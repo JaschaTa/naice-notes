@@ -1,6 +1,6 @@
 // Every local change the UI can make. Each one writes to the store (marking the row dirty) and
 // then asks for a sync; nothing here talks to the network directly, so it all works offline.
-import { generateKeyBetween } from 'fractional-indexing'
+import { generateKeyBetween, generateNKeysBetween } from 'fractional-indexing'
 import { bySortKey, type Item, type Section } from './model.ts'
 import { nextDueAt } from './schedule.ts'
 import type { Store } from './store.ts'
@@ -82,6 +82,27 @@ export class Notes {
     await this.store.write('items', item)
     this.requestSync()
     return item
+  }
+
+  /**
+   * Several notes at once (a scanned recipe), on top and in the given order — Android's
+   * bulkAddItems. One write and one sync, so the list can't show up half-added.
+   */
+  async addItems(sectionId: string, texts: string[]): Promise<Item[]> {
+    if (texts.length === 0) return []
+    const first = (await this.items(sectionId))[0]
+    const keys = generateNKeysBetween(null, first?.sortKey ?? null, texts.length)
+    const now = Date.now()
+    const items: Item[] = texts.map((text, i) => ({
+      id: crypto.randomUUID(), sectionId, text, isChecked: false, sortKey: keys[i],
+      createdAt: now, createdBy: null,
+      linkUrl: findUrl(text), linkTitle: null, linkImageUrl: null, linkFetchFailed: false,
+      dueAt: null, repeatWeeks: null,
+      deletedAt: null, rev: null, dirty: 1, version: 0,
+    }))
+    await this.store.writeAll(items.map((row) => ({ table: 'items' as const, row })))
+    this.requestSync()
+    return items
   }
 
   async updateItem(id: string, patch: Partial<Pick<Item, 'text' | 'isChecked' | 'dueAt' | 'repeatWeeks'>>): Promise<void> {

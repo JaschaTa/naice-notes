@@ -21,4 +21,6 @@ The repo was `naice-notes-apk` with the Android project at the top level until 2
 
 `pwa/` is the iPhone/web client (Vite + Preact + TypeScript), live at https://naice-notes.com via Cloudflare Workers (`pwa/wrangler.jsonc`, auto-deploys ~60s after a push to `main`). `supabase/` is the sync backend; its README holds the setup and the **sync contract** both clients follow. Android syncs too. Sharing is per section (⋮ → Share…): the section moves into its own shared space, owner-only delete, members can leave. Your S24 notes (minus the Claude section) were imported once into the personal space on 2026-11-11 with `pwa/scripts/import-android-snapshot.mjs`; Android's v8 migration derives the same ids, so its first sync adopts those rows.
 
+**Recipe scan** (photo → ingredient lines → items) runs in both clients through the Edge Function `supabase/functions/scan-recipe`, which calls a vision model via OpenRouter with the user's session; nothing is stored server-side, the items are added locally and sync. Setup and the OpenRouter privacy settings are in `supabase/README.md`.
+
 Client-side sync rules: "Android sync" in `android/CLAUDE.md`, gotchas in `pwa/CLAUDE.md`.

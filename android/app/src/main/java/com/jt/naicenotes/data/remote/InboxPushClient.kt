@@ -17,9 +17,8 @@ import java.util.concurrent.TimeUnit
  * Pushes a newly created note to the vault's task inbox, which turns it into a GitLab
  * issue that `/process-tasks` later proposes as a real task.
  *
- * Shaped after [RecipeScanClient] — same OkHttp/Result/blank-config idiom — with two
- * differences: a JSON body instead of multipart, and a per-request signed JWT rather than
- * a static secret header (see [JwtSigner]).
+ * Plain OkHttp with the Result/blank-config idiom: a blank URL means unconfigured. Auth is
+ * a per-request signed JWT rather than a static secret header (see [JwtSigner]).
  *
  * Delivery is best-effort in the same spirit as link previews: a failure leaves
  * `items.pushedAt` NULL, the note stays put, and the next app launch retries. Unlike a
@@ -31,7 +30,7 @@ class InboxPushClient(
     private val jwtSecret: String,
 ) {
 
-    // Shorter than the recipe scan's 60s: this is a few hundred bytes of text, and a
+    // Short timeouts: this is a few hundred bytes of text, and a
     // hung push shouldn't hold a coroutine open for a minute on a flaky mobile connection.
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
