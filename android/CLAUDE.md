@@ -42,6 +42,8 @@ The debugging port rotates every session. Discover it rather than reading it off
 adb pair <ip>:<pairing-port> <6-digit-code>
 ```
 
+While the pairing dialog is open, `adb mdns services` also lists a `_adb-tls-pairing._tcp` endpoint. Take the port from there: a mistyped port fails with the unhelpful `protocol fault (couldn't read status message)`.
+
 Networks with client isolation (many public/transport hotspots) block device-to-device TCP entirely; use USB there.
 
 ## Platform gotcha ledger

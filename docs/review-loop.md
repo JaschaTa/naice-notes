@@ -11,7 +11,7 @@ How features and bug fixes are reviewed in this repo. It runs until every review
 
 ## 1. Split into steps
 
-Before writing code, split the work into steps and write the list down. A step is something that builds and passes its tests on its own, e.g. "migration + RLS test", "PWA data layer", "PWA sheet", "Android port". Shared logic is ported to both clients in the same step (see CLAUDE.md).
+Before writing code, split the work into steps and write the list down. A step is something that builds and passes its tests on its own, e.g. "migration + RLS test", "PWA data layer", "PWA sheet". New features are PWA-first: the "Android port" step only starts after the user has tried the PWA and said yes to the APK (see CLAUDE.md).
 
 ## 2. Review
 
