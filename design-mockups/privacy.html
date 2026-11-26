@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy policy · Naice Notes</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/png" href="../pwa/public/favicon.png" />
+<link href="landing-assets/fonts/fonts.css" rel="stylesheet" />
+<style>
+/* Stub for the landing mockup (landing-04-editorial.html). Content is a skeleton with placeholders, not legal text. */
+:root { --paper: #F6F3EE; --ink: #141414; --ink-2: #57534E; --line: #E4DED5; --dark: #131209; --coral-ink: #D4503A; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/24px 'Manrope', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+.wrap { width: min(720px, 100% - 48px); margin: 0 auto; }
+header { border-bottom: 1px solid var(--line); }
+header .wrap { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; width: min(1200px, 100% - 48px); }
+.brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+.brand img { width: 32px; height: 32px; border-radius: 8px; }
+.brand span { font-family: 'Instrument Serif', Georgia, serif; font-size: 30px; line-height: 1; }
+.back { color: var(--ink-2); text-decoration: none; font-size: 14px; }
+.back:hover { color: var(--ink); }
+main { padding: 64px 0 96px; }
+h1 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 60px; line-height: 1; margin: 0 0 16px; }
+h2 { font-size: 18px; line-height: 28px; font-weight: 600; margin: 40px 0 8px; }
+p, li { color: var(--ink-2); }
+.ph { color: #A15C00; font-family: ui-monospace, monospace; font-size: 13px; }
+.note { padding: 16px; border: 1px dashed #CFC7BA; border-radius: 16px; font-size: 14px; line-height: 20px; }
+footer { background: var(--dark); color: #8E897F; padding: 24px 0; font-size: 12px; }
+footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; width: min(1200px, 100% - 48px); }
+footer a { color: #D6D1C7; text-decoration: none; margin-left: 24px; }
+footer a:hover { color: #fff; }
+a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+footer a:focus-visible { outline-color: var(--paper); }
+</style>
+</head>
+<body>
+<header><div class="wrap"><a class="brand" href="landing-04-editorial.html"><img src="../pwa/public/icon-192.png" alt="" /><span>Naice Notes</span></a><a class="back" href="landing-04-editorial.html">Back to the start page</a></div></header>
+<main class="wrap">
+<h1>Privacy policy</h1>
+<p>What Naice Notes stores, where it goes, and why. <span class="ph">{{last updated}}</span></p>
+<h2>Who is responsible</h2>
+<p><span class="ph">{{name and address, as in the Impressum}}</span>, <span class="ph">{{contact email}}</span></p>
+<h2>This website</h2>
+<p>Served by Cloudflare. <span class="ph">{{server logs: what, how long}}</span> No analytics, no ads, no tracking cookies. Fonts are served from this site.</p>
+<h2>Your account and notes</h2>
+<p>Your email address, your lists and notes, and the people you share lists with. Stored on your device and synced through Supabase in Frankfurt, Germany. <span class="ph">{{retention and deletion}}</span></p>
+<h2>Sign in emails</h2>
+<p>Sign in codes and invites are sent by email through Google (Gmail). <span class="ph">{{confirm}}</span></p>
+<h2>AI features</h2>
+<p>Recipe photos, voice notes and lists you ask to summarise are sent through OpenRouter to a vision or language model, with zero data retention, and nothing is kept on our servers. <span class="ph">{{provider details, confirm for voice and summaries}}</span></p>
+<h2>Your rights</h2>
+<p>Access, correction, deletion, restriction, portability and objection under the GDPR, and the right to complain to a supervisory authority. <span class="ph">{{how to request}}</span></p>
+<p class="note">Skeleton only, drafted from what the code does today (see supabase/README.md). Not legal advice. Have it checked before going live.</p>
+</main>
+<footer><div class="wrap"><span>© 2026 Naice Notes</span><span><a href="impressum.html">Impressum</a><a href="privacy.html">Privacy policy</a></span></div></footer>
+</body>
+</html>
