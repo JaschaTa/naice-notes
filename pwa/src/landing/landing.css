@@ -148,7 +148,7 @@ section { padding: var(--s-900) 0; }
    vertically level with the island. Difference blending keeps it readable over the dark rail and the white list. */
 .status { position: absolute; top: 0; left: 0; right: 0; height: 52px; z-index: 2; display: grid; grid-template-columns: 1fr 34% 1fr; align-items: center;
   color: #fff; mix-blend-mode: difference; font-size: 13px; font-weight: 600; letter-spacing: -0.2px; font-variant-numeric: tabular-nums; pointer-events: none; }
-.status .clock { justify-self: start; padding-left: 15px; }
+.status .clock { justify-self: start; padding-left: 8px; }
 .status .sys { grid-column: 3; justify-self: center; display: flex; align-items: center; gap: 4px; }
 .status svg { display: block; fill: currentColor; }
 .app-main { padding-top: 52px; }
