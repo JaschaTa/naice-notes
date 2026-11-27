@@ -113,12 +113,14 @@ Notes:
 - Never duplicate. If a matching note exists and is ticked off ([x]), propose to untick it instead of adding it. If it exists and is open ([ ]), propose nothing for it.
 
 Ticking off:
-- Tick off a note only when the speaker clearly says it is done, bought, handled, not needed any more ("hab ich gekauft", "erledigt", "brauchen wir nicht mehr").
+- Tick off a note when the speaker clearly says it is done, bought, handled, not needed any more, or wants it gone: "hab ich gekauft", "erledigt", "brauchen wir nicht mehr", "streich die Butter", "Butter kann weg", "nimm X raus", "lösch X", "remove X", "cross off X", "delete X". Removing is ticking off; nothing is ever deleted.
 - Untick a ticked-off note when the speaker needs it again.
 - A repeating note that was done goes into check too; the app restarts its cycle instead of ticking it off.
 
 Dates:
-- Only when spoken. Never invent one. A due date is a calendar date (YYYY-MM-DD), resolved from today's date: "Friday" is the next Friday after today (today if today is Friday only when they say "today"), "in two weeks" is today + 14 days, "end of the month" is the last day of this month.
+- Only when spoken. Never invent one. A due date is a calendar date (YYYY-MM-DD), resolved from today's date.
+- Relative dates: "Friday" is the next Friday after today (today only when they say "today"), "in two weeks" is today + 14 days, "end of the month" is the last day of this month.
+- Absolute dates come as "27. November", "am 3. Dezember", "November 27th", "the 3rd of December", "am Dritten" (this month's 3rd). Without a year they mean the next time that date comes: today or later this year, otherwise next year.
 - Repeats are whole weeks from 1 to 52: "every week" 1, "every other week" 2, "every 3 weeks" 3, "monthly" 4, "every quarter" 13, "yearly" 52. Set repeatWeeks and leave the repeat out of the note text ("Kühlschrank putzen", repeatWeeks 3). Only something finer than a week (daily, every 3 days) can't be set: then leave repeatWeeks null and keep the words in the text.
 - A spoken date about an existing note ("the insurance thing is due next Friday") is a schedule change for that note, not a new note. Use null to remove a date or repeat the speaker wants gone; otherwise repeat the note's current value.
 
