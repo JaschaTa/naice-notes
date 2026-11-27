@@ -1,6 +1,6 @@
 # Privacy policy
 
-Last updated: {{date}}
+Last updated: 27 November 2026
 
 This policy explains what happens to your data when you visit naice-notes.com and when you use the
 Naice Notes web app. A German version is available; if the two differ, the German version prevails.
@@ -146,7 +146,7 @@ your particular situation. Write to {{email}}.
 
 You also have the right to lodge a complaint with a data protection supervisory authority, for
 example the one responsible for me:\
-{{supervisory_authority}}
+Der Hamburgische Beauftragte für Datenschutz und Informationsfreiheit, Ludwig-Erhard-Straße 22, 20459 Hamburg
 
 ## 10. Do you have to provide data?
 

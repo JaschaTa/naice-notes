@@ -19,8 +19,9 @@ convenience translation; drop it if keeping two versions in sync is too much.
 | `terms.de.md`, `terms.en.md` | parked until something costs money | — |
 
 Placeholders: `{{name}}`, `{{street}}`, `{{postcode}}`, `{{city}}`, `{{email}}`, `{{phone}}`
-(optional), `{{date}}`, `{{supervisory_authority}}` (the data protection authority of your
-Bundesland). The repo is public: fill them in at build time or keep the filled files out of git.
+(optional), filled at build time from `LEGAL_*` variables because the repo is public. The date
+("Stand") and the supervisory authority (Hamburg) are written into the texts: update the date with
+every change to a privacy text. The parked terms still use `{{date}}`.
 
 ## Plan
 

@@ -1,6 +1,6 @@
 # Datenschutzerklärung
 
-Stand: {{date}}
+Stand: 27. November 2026
 
 Diese Erklärung beschreibt, was mit deinen Daten passiert, wenn du naice-notes.com besuchst und die
 Web-App Naice Notes nutzt. Es gibt sie auch auf Englisch; bei Abweichungen gilt die deutsche Fassung.
@@ -155,7 +155,7 @@ Gründen widersprechen, die sich aus deiner besonderen Situation ergeben. Schrei
 
 Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren, zum Beispiel bei der für
 mich zuständigen:\
-{{supervisory_authority}}
+Der Hamburgische Beauftragte für Datenschutz und Informationsfreiheit, Ludwig-Erhard-Straße 22, 20459 Hamburg
 
 ## 10. Musst du Daten angeben?
 

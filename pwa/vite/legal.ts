@@ -17,8 +17,6 @@ export const FIELDS: Record<string, string> = {
   city: 'LEGAL_CITY',
   email: 'LEGAL_EMAIL',
   phone: 'LEGAL_PHONE',
-  date: 'LEGAL_DATE',
-  supervisory_authority: 'LEGAL_SUPERVISORY_AUTHORITY',
 }
 /** May stay empty; a line whose only placeholders are empty optional ones is dropped. */
 const OPTIONAL = new Set(['phone'])
