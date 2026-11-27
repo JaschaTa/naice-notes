@@ -18,7 +18,7 @@ export function App() {
     return () => data.subscription.unsubscribe()
   }, [])
 
-  // Dev-only sample data at /?demo (see dev/demo.ts); the DEV check removes it from production builds.
+  // Dev-only sample data at /app/?demo (see dev/demo.ts); the DEV check removes it from production builds.
   const demo = import.meta.env.DEV && new URLSearchParams(location.search).has('demo')
   useEffect(() => {
     if (!demo) return
@@ -61,7 +61,14 @@ function Shell({ children }: { children: ComponentChildren }) {
       <img class="logo" src="/icon-192.png" alt="" width="80" height="80" />
       <h1>Naice Notes</h1>
       {children}
-      <footer><span>v{__APP_VERSION__}</span></footer>
+      <footer>
+        <nav class="legal-links" aria-label="Legal">
+          <a href="/impressum/">Impressum</a>
+          <a href="/privacy/" hreflang="de">Datenschutz</a>
+          <a href="/privacy/en/">Privacy</a>
+        </nav>
+        <span>v{__APP_VERSION__}</span>
+      </footer>
     </main>
   )
 }

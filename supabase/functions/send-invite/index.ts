@@ -12,6 +12,11 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import nodemailer from 'npm:nodemailer@6'
 
 const SITE = 'https://naice-notes.com'
+// Invited people never saw the site, so the first email has to say where their address came from
+// and link the privacy policy (Art. 14(3)(b) GDPR). Don't deploy before this page is live.
+const PRIVACY = `${SITE}/privacy/`
+// The landing page is at /, the app at /app/: invited people go straight to the sign-in screen.
+const APP = `${SITE}/app/`
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -62,20 +67,23 @@ Deno.serve(async (req) => {
   if (!person) return reply(403, { error: 'that address is not in this section' })
 
   const from = user.email ?? 'Someone'
-  const name = section.name
+  // The name is chosen by the inviter and lands in the subject and plain text: keep it short.
+  const raw = String(section.name ?? '')
+  const name = raw.length > 80 ? `${raw.slice(0, 79)}…` : raw
   const subject = `${from} shared "${name}" with you`
   const steps = person.joined
-    ? `You will find it in your sections: ${SITE}`
-    : `Sign up with your email address to check the notes: ${SITE}`
-  const text = `Hey there 👋\n\n${from} shared the section "${name}" with you in Naice Notes.\n\n${steps}\n\nOn an iPhone: open it in Safari, then Share → Add to Home Screen to keep it like an app.`
+    ? `You will find it in your sections: ${APP}`
+    : `Sign up with your email address to check the notes: ${APP}`
+  const text = `Hey there 👋\n\n${from} shared the section "${name}" with you in Naice Notes.\n\n${steps}\n\nOn an iPhone: open it in Safari, then Share → Add to Home Screen to keep it like an app.\n\n—\nYou got this email because ${from} entered your address in Naice Notes to share a list with you. How your address is used, and how to have it deleted: ${PRIVACY}`
   const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:16px;line-height:1.5;color:#1b1b1f;max-width:480px">
 <p>Hey there 👋</p>
 <p><b>${escape(from)}</b> shared the section <b>“${escape(name)}”</b> with you in Naice Notes.</p>
 <p>${person.joined
     ? `You will find it in your sections.`
     : `Sign up with your email address to check the notes.`}</p>
-<p><a href="${SITE}" style="display:inline-block;background:#1b1b1f;color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px">Open Naice Notes</a></p>
+<p><a href="${APP}" style="display:inline-block;background:#1b1b1f;color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px">Open Naice Notes</a></p>
 <p style="color:#666;font-size:14px">On an iPhone: open it in Safari, then Share → Add to Home Screen to keep it like an app.</p>
+<p style="color:#666;font-size:13px;border-top:1px solid #e5e5e5;padding-top:12px">You got this email because ${escape(from)} entered your address in Naice Notes to share a list with you. <a href="${PRIVACY}" style="color:#666">How your address is used, and how to have it deleted</a>.</p>
 </div>`
 
   try {

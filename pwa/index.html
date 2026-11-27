@@ -1,19 +1,254 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Naice Notes</title>
-    <meta name="theme-color" content="#f0806a" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <!-- iOS ignores the manifest icons and wants an opaque PNG here -->
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="Naice Notes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<script>
+  // The app lives at /app/. Home-screen installs still open / (iOS keeps the URL from install
+  // time), and people who are signed in expect their notes, so both go straight to the app,
+  // before anything paints. Supabase keeps the session under sb-<project>-auth-token.
+  (function () {
+    try {
+      var installed = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true
+      var signedIn = false
+      for (var i = 0; i < localStorage.length; i++) if (/^sb-.+-auth-token$/.test(localStorage.key(i) || '')) { signedIn = true; break }
+      if (installed || signedIn) location.replace('/app/' + location.search + location.hash)
+    } catch (e) { /* storage blocked: just show the page */ }
+    document.documentElement.classList.add('js')
+  })()
+</script>
+<title>Naice Notes · The notes app you always wanted</title>
+<meta name="description" content="Ramble, snap or type, and Naice Notes turns it into tidy lists you can share. Reminders wait until they're due. Free and invite only." />
+<link rel="canonical" href="https://naice-notes.com/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Naice Notes" />
+<meta property="og:title" content="Naice Notes · The notes app you always wanted" />
+<meta property="og:description" content="Ramble, snap or type, and Naice Notes turns it into tidy lists you can share. Free and invite only." />
+<meta property="og:url" content="https://naice-notes.com/" />
+<meta property="og:image" content="https://naice-notes.com/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="theme-color" content="#F4F1EC" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content="Naice Notes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="preload" href="/fonts/instrument-serif-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="/fonts/fonts.css" />
+<link rel="stylesheet" href="/src/landing/landing.css" />
+<script type="module" src="/src/landing/landing.ts"></script>
+</head>
+<body>
+<a class="skip button-sm" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-current="page"><img src="/icon-192.png" alt="" width="32" height="32" /><span class="wordmark">Naice Notes</span></a>
+    <a class="btn btn-ink button-sm" href="/app/">Sign in</a>
+  </div>
+  <div class="nav-rule"></div>
+</header>
+
+<main id="main">
+
+<!-- ═════════ HERO ═════════ -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <h1 class="display-1"><span class="line">The notes app you</span><span class="line"><em class="accent">always wanted.</em></span></h1>
+      <p class="sub heading-5 muted">Even if you didn't know it.</p>
+      <div class="cta-row">
+        <a class="btn btn-ink lg button-md" href="/app/">Sign in with your invite
+          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.7 133.7l-72 72a8 8 0 0 1-11.4-11.4L196.7 136H40a8 8 0 0 1 0-16h156.7l-58.4-58.3a8 8 0 0 1 11.4-11.4l72 72a8 8 0 0 1 0 11.4Z"/></svg></a>
+        <div class="proof caption-1 muted"><span>Free</span><span>Invite only</span></div>
+      </div>
+    </div>
+
+    <div class="stage has-hand" id="stage">
+      <img class="hand-img" src="/src/landing/hand.webp" alt="" width="1280" height="1408" />
+
+      <div class="phone" role="img" aria-label="Naice Notes on a phone: the Shopping list Mara shared, with a dark sidebar of emoji list tiles">
+        <div class="island"></div>
+        <div class="screen">
+          <div class="app-rail">
+            <div class="t active" style="background:rgba(76,175,80,0.22)">🛒<span class="b" id="open-badge">5</span></div>
+            <div class="t" style="background:rgba(33,150,243,0.22)">🏠<span class="b due">1</span></div>
+            <div class="t letter" style="background:var(--pink)">W<span class="b">1</span></div>
+            <div class="t" style="background:rgba(156,39,176,0.22)">📚</div>
+          </div>
+          <div class="app-main">
+            <div class="status"><span>9:41</span><span>●●●</span></div>
+            <div class="app-head">
+              <div class="name">Shopping</div>
+              <div class="counts"><span id="open-count">5 open</span> · <b>1 due</b> · <span class="faces"><i style="background:var(--blue)">M</i><i style="background:var(--teal)">J</i></span></div>
+            </div>
+            <div class="rows" id="hero-rows">
+              <div class="r due"><span class="c"></span><span class="x">water the balcony plants</span><span class="g">🔁</span></div>
+              <div class="r"><span class="c"></span><span class="x">250 g spaghetti</span><span class="by">M</span></div>
+              <div class="r"><span class="c"></span><span class="x">fresh basil leaves</span></div>
+              <div class="r"><span class="c"></span><span class="x">milk</span></div>
+              <div class="r"><span class="c"></span><span class="x">bin bags</span></div>
+              <div class="r done" id="olive"><span class="c"></span><span class="x">olive oil</span><span class="by">J</span></div>
+              <div class="notdue">NOT DUE YET</div>
+              <div class="r wait"><span class="c"></span><span class="x">book the winter service</span><span class="g">⏳</span></div>
+              <div class="r wait"><span class="c"></span><span class="x">descale the coffee machine</span><span class="g">⏳</span></div>
+              <div class="r wait"><span class="c"></span><span class="x">renew contents insurance</span><span class="g">⏳</span></div>
+            </div>
+            <div class="composer">
+              <div class="f">Add to Shopping</div>
+              <div class="tools">
+                <span class="on"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M128 176a48 48 0 0 0 48-48V64a48 48 0 0 0-96 0v64a48 48 0 0 0 48 48Zm-32-112a32 32 0 0 1 64 0v64a32 32 0 0 1-64 0Zm40 143.6V232a8 8 0 0 1-16 0v-24.4A80.1 80.1 0 0 1 48 128a8 8 0 0 1 16 0 64 64 0 0 0 128 0 8 8 0 0 1 16 0 80.1 80.1 0 0 1-72 79.6Z"/></svg></span>
+                <span><svg viewBox="0 0 256 256" fill="currentColor"><path d="M208 56h-27.7l-13.6-20.4A8 8 0 0 0 160 32H96a8 8 0 0 0-6.7 3.6L75.7 56H48a24 24 0 0 0-24 24v112a24 24 0 0 0 24 24h160a24 24 0 0 0 24-24V80a24 24 0 0 0-24-24Zm8 136a8 8 0 0 1-8 8H48a8 8 0 0 1-8-8V80a8 8 0 0 1 8-8h32a8 8 0 0 0 6.7-3.6L100.3 48h55.4l13.6 20.4A8 8 0 0 0 176 72h32a8 8 0 0 1 8 8ZM128 88a44 44 0 1 0 44 44 44 44 0 0 0-44-44Zm0 72a28 28 0 1 1 28-28 28 28 0 0 1-28 28Z"/></svg></span>
+                <span><svg viewBox="0 0 256 256" fill="currentColor"><path d="M208 144a15.8 15.8 0 0 1-10.5 15l-51.6 19-19 51.6a16 16 0 0 1-30 0l-19-51.6-51.6-19a16 16 0 0 1 0-30l51.6-19 19-51.6a16 16 0 0 1 30 0l19 51.6 51.6 19A15.8 15.8 0 0 1 208 144Z"/></svg></span>
+                <i></i><span>⏰</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ BEFORE → AFTER ═════════ -->
+<section id="ai">
+  <div class="wrap">
+    <div class="ba-head reveal">
+      <h2 class="display-2">Your head is not a <em class="accent">list.</em></h2>
+      <p class="title-2 muted">Talk the way you think. Each thing becomes its own note, in the right list, with a date if you said one.</p>
+    </div>
+    <div class="ba">
+      <div class="before reveal">
+        <div class="rec" aria-hidden="true"><span class="dot"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M128 176a48 48 0 0 0 48-48V64a48 48 0 0 0-96 0v64a48 48 0 0 0 48 48Z"/></svg></span><span class="wave"></span><span class="caption-4 faint">0:11</span></div>
+        <p class="bubble body-3">ok so we need milk, <span class="um">and um,</span> call the plumber on Friday about the sink, <span class="um">oh and</span> we're out of bin bags, and remind me to descale the coffee machine every month</p>
+      </div>
+      <div class="arrow" aria-hidden="true"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M221.7 133.7l-72 72a8 8 0 0 1-11.4-11.4L196.7 136H40a8 8 0 0 1 0-16h156.7l-58.4-58.3a8 8 0 0 1 11.4-11.4l72 72a8 8 0 0 1 0 11.4Z"/></svg></div>
+      <div class="after reveal" id="after">
+        <div class="meta"><span class="caption-3 faint">4 notes, 2 lists</span><span class="new-tag caption-4">Sorted</span></div>
+        <div class="note"><span class="t" style="background:rgba(76,175,80,0.22)">🛒</span>milk</div>
+        <div class="note"><span class="t" style="background:rgba(33,150,243,0.22)">🏠</span>call the plumber about the sink<span class="when">⏰ Fri</span></div>
+        <div class="note"><span class="t" style="background:rgba(76,175,80,0.22)">🛒</span>bin bags</div>
+        <div class="note"><span class="t" style="background:rgba(33,150,243,0.22)">🏠</span>descale the coffee machine<span class="when">🔁 4 weeks</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ FEATURES: five cards in a swipe row ═════════ -->
+<section id="features" style="padding-top:0" aria-label="What Naice Notes does">
+  <div class="wrap">
+    <div class="panels-head reveal">
+      <h2 class="display-2">Your notes app.<br /><em class="accent">As unique as you.</em></h2>
+      <div class="car-nav">
+        <button class="car-btn" id="car-prev" aria-label="Previous card" disabled><svg viewBox="0 0 256 256" fill="currentColor"><path d="M224 128a8 8 0 0 1-8 8H59.3l58.4 58.3a8 8 0 0 1-11.4 11.4l-72-72a8 8 0 0 1 0-11.4l72-72a8 8 0 0 1 11.4 11.4L59.3 120H216a8 8 0 0 1 8 8Z"/></svg></button>
+        <button class="car-btn" id="car-next" aria-label="Next card"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M221.7 133.7l-72 72a8 8 0 0 1-11.4-11.4L196.7 136H40a8 8 0 0 1 0-16h156.7l-58.4-58.3a8 8 0 0 1 11.4-11.4l72 72a8 8 0 0 1 0 11.4Z"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <div class="carousel reveal" id="carousel">
+      <article class="panel">
+        <h3 class="display-4">Say it</h3>
+        <p class="body-3 muted">Ramble for ten seconds. Get four tidy notes.</p>
+        <div class="crop" aria-hidden="true"><div class="screen">
+          <div class="bar">🛒 Shopping · voice</div>
+          <div class="listening"><div class="big-wave"></div><div class="live">milk, call the plumber on Friday, <span>we're out of…</span></div><div class="stop"><i></i></div></div>
+        </div></div>
+      </article>
+      <article class="panel">
+        <h3 class="display-4">Snap it</h3>
+        <p class="body-3 muted">Photo of a recipe in, ingredients on your shopping list out.</p>
+        <div class="snapvis" aria-hidden="true">
+          <div class="book">
+            <div class="course">PRIMI</div>
+            <div class="dish">Spaghetti al pomodoro</div>
+            <div class="serves">Serves 4 · 25 minutes</div>
+            <div class="ings">250 g spaghetti<br />2 garlic cloves<br />400 g chopped tomatoes<br />1 tbsp olive oil<br />a handful of basil<br />parmesan, to serve
+              <div class="scanframe"><b></b><b></b><b></b><b></b><span class="line"></span></div></div>
+            <div class="method"><i></i><i style="width:86%"></i><i style="width:92%"></i><i style="width:60%"></i></div>
+          </div>
+          <span class="spark"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M208 144a15.8 15.8 0 0 1-10.5 15l-51.6 19-19 51.6a16 16 0 0 1-30 0l-19-51.6-51.6-19a16 16 0 0 1 0-30l51.6-19 19-51.6a16 16 0 0 1 30 0l19 51.6 51.6 19A15.8 15.8 0 0 1 208 144Z"/></svg></span>
+          <div class="added">
+            <div class="hd"><span class="t" style="background:rgba(76,175,80,0.22)">🛒</span>Shopping<em>+6 added</em></div>
+            <div class="r"><span class="c"></span><span class="x">250 g spaghetti</span></div>
+            <div class="r"><span class="c"></span><span class="x">2 garlic cloves</span></div>
+            <div class="r"><span class="c"></span><span class="x">400 g chopped tomatoes</span></div>
+            <div class="r"><span class="c"></span><span class="x">1 tbsp olive oil</span></div>
+            <div class="more">and 2 more</div>
+          </div>
+        </div>
+      </article>
+      <article class="panel">
+        <h3 class="display-4">Sum it up</h3>
+        <p class="body-3 muted">One tap tells you what the list is for and what you could skip.</p>
+        <div class="crop" aria-hidden="true"><div class="screen summary">
+          <div class="h"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M208 144a15.8 15.8 0 0 1-10.5 15l-51.6 19-19 51.6a16 16 0 0 1-30 0l-19-51.6-51.6-19a16 16 0 0 1 0-30l51.6-19 19-51.6a16 16 0 0 1 30 0l19 51.6 51.6 19A15.8 15.8 0 0 1 208 144Z"/></svg>Shopping, in short</div>
+          <p>Mostly a <b>pasta night</b>: spaghetti, tomatoes, basil, parmesan.</p>
+          <p><b>Olive oil</b> has been on here for 3 weeks. Jonas just ticked it off.</p>
+          <span class="chip">🍝 pasta night</span><span class="chip">🧽 household</span><span class="chip">3 weeks old</span>
+        </div></div>
+      </article>
+      <article class="panel">
+        <h3 class="display-4">Share it</h3>
+        <p class="body-3 muted">Share Shopping with your household. Keep Work to yourself.</p>
+        <div class="crop" aria-hidden="true"><div class="screen">
+          <div class="bar">Your lists</div>
+          <div class="share-rows">
+            <div class="srow"><span class="t" style="background:rgba(76,175,80,0.22)">🛒</span>Shopping<span class="side"><span class="faces"><i style="background:var(--coral)">Y</i><i style="background:var(--blue)">M</i><i style="background:var(--teal)">J</i></span></span></div>
+            <div class="srow"><span class="t" style="background:rgba(33,150,243,0.22)">🏠</span>Household<span class="side"><span class="faces"><i style="background:var(--coral)">Y</i><i style="background:var(--blue)">M</i></span></span></div>
+            <div class="srow private"><span class="t letter" style="background:var(--pink)">W</span>Work<span class="side"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M208 80h-32V56a48 48 0 0 0-96 0v24H48a16 16 0 0 0-16 16v112a16 16 0 0 0 16 16h160a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16ZM96 56a32 32 0 0 1 64 0v24H96Zm112 152H48V96h160v112Z"/></svg>only you</span></div>
+            <div class="srow private"><span class="t" style="background:rgba(156,39,176,0.22)">📚</span>Reading<span class="side"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M208 80h-32V56a48 48 0 0 0-96 0v24H48a16 16 0 0 0-16 16v112a16 16 0 0 0 16 16h160a16 16 0 0 0 16-16V96a16 16 0 0 0-16-16ZM96 56a32 32 0 0 1 64 0v24H96Zm112 152H48V96h160v112Z"/></svg>only you</span></div>
+          </div>
+        </div></div>
+      </article>
+      <article class="panel">
+        <h3 class="display-4">Remember it</h3>
+        <p class="body-3 muted">Give a note a date. It waits until it's due, then comes back. No nagging.</p>
+        <div class="crop" aria-hidden="true"><div class="screen remember">
+          <div class="bar">🏠 Household</div>
+          <div class="r due"><span class="c"></span><span class="x">change the bed sheets</span><span class="g">🔁</span></div>
+          <div class="r"><span class="c"></span><span class="x">call the plumber</span></div>
+          <div class="notdue">NOT DUE YET</div>
+          <div class="r wait"><span class="c"></span><span class="x">book the winter service</span><span class="g">⏳</span></div>
+          <div class="r wait"><span class="c"></span><span class="x">descale the coffee machine</span><span class="g">⏳</span></div>
+          <div class="r wait"><span class="c"></span><span class="x">renew contents insurance</span><span class="g">⏳</span></div>
+        </div></div>
+      </article>
+  </div>
+</section>
+
+<!-- ═════════ CLOSING ═════════ -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <div class="final-card reveal">
+      <div>
+        <h2 class="display-2">Your list is <em class="accent">waiting.</em></h2>
+        <p class="title-2 muted">Invite only for now. Ask someone who uses it to share a list with you.</p>
+        <a class="btn btn-ink lg button-md" href="/app/">Sign in with your invite
+          <svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M221.7 133.7l-72 72a8 8 0 0 1-11.4-11.4L196.7 136H40a8 8 0 0 1 0-16h156.7l-58.4-58.3a8 8 0 0 1 11.4-11.4l72 72a8 8 0 0 1 0 11.4Z"/></svg></a>
+      </div>
+      <div class="crop" aria-hidden="true"><div class="screen signin">
+        <div class="title-3" style="font-family:var(--app);font-weight:700;font-size:17px">Check your email</div>
+        <div class="label">Type the code we sent to you@example.com</div>
+        <div class="boxes"><span>4</span><span>1</span><span>7</span><span>2</span><span>0</span><span class="cur"></span></div>
+        <div class="go">Sign in</div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-main">
+      <a class="foot-brand" href="#top"><img src="/icon-192.png" alt="" /><span>Naice Notes</span></a>
+      <nav class="legal body-3" aria-label="Legal"><a href="/impressum/">Impressum</a><a href="/privacy/" hreflang="de">Datenschutz</a><a href="/privacy/en/">Privacy</a></nav>
+    </div>
+    <div class="foot-rule"></div>
+    <div class="foot-bottom caption-4"><span>© 2026 Naice Notes</span><span>Free · Invite only</span></div>
+  </div>
+</footer>
+
+</body>
 </html>

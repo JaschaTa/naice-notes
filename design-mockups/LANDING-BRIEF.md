@@ -22,7 +22,7 @@ The page presents three AI features as available. Only one exists today:
 | Voice input with an AI analyser: ramble, and it's split into notes in the right lists | **Planned before the release** |
 | Grocery list summaries | **Planned before the release** |
 
-**The page doesn't go live until both planned features ship, or their blocks are removed.** The
+**Overridden 2026-11-27:** the page goes live as designed, presenting voice and summaries before they ship (your call). ~~The page doesn't go live until both planned features ship, or their blocks are removed.~~ The
 copy for them is a draft and gets rechecked against what is actually built (marked `{{confirm}}`).
 Following CLAUDE.md, both are built PWA first.
 
@@ -223,3 +223,7 @@ Prompt (Nano Banana):
 > unpolished nails, no rings or jewellery. Soft diffused daylight, a gentle soft shadow. Background:
 > perfectly flat solid #F6F3EE with a large flat solid #F0806A circle centred behind the phone, no
 > texture, no gradient, no props. 4:5 portrait, high resolution.
+
+## Implemented (2026-11-27)
+
+Direction 4 is built in `pwa/` (`index.html`, `src/landing/`), with the app moved to `/app/`. See `pwa/CLAUDE.md`.

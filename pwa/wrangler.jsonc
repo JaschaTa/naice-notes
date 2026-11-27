@@ -6,7 +6,9 @@
   "compatibility_date": "2026-11-01",
   "assets": {
     "directory": "./dist",
-    // Unknown paths serve index.html, so deep links into the app don't 404.
-    "not_found_handling": "single-page-application"
+    // The landing page is index.html, the app app/index.html, legal pages are folders with an
+    // index.html (/privacy → /privacy/ by the default auto-trailing-slash handling). Anything else
+    // gets the branded 404.html. The app has no deep links of its own.
+    "not_found_handling": "404-page"
   }
 }
