@@ -19,7 +19,7 @@ const item = (sectionId: string, text: string, sortKey: string, extra: Partial<I
   linkUrl: null, linkTitle: null, linkImageUrl: null, linkFetchFailed: false, dueAt: null, repeatWeeks: null,
   deletedAt: null, rev: null, dirty: 0, version: 0, ...extra,
 })
-const wire = (p: Partial<WireProposal>): WireProposal => ({ transcript: 't', newLists: [], add: [], check: [], uncheck: [], schedule: [], ...p })
+const wire = (p: Partial<WireProposal>): WireProposal => ({ transcript: 't', newLists: [], add: [], check: [], uncheck: [], existing: [], schedule: [], ...p })
 
 function fixture() {
   const shop = section('Einkauf', keys[0], { emoji: '🛒' })
@@ -102,6 +102,14 @@ describe('resolveProposal', () => {
     expect(p.changes).toEqual([{ kind: 'reset', item: f.sheets, dueAt: nextDueAt(NOW, 2) }])
   })
 
+  it('shows notes that are already there, and makes a waiting one active now', () => {
+    const f = fixture()
+    const ctx = buildContext(f.sections, f.items, null, NOW)
+    // i2 Brot is open; i4 Bettwäsche is waiting (due in 3 days); i1 Milch is ticked off.
+    const p = resolveProposal(wire({ existing: ['i2', 'i4', 'i1', 'i99'] }), ctx, f.sections, f.items, NOW)
+    expect(p.changes).toEqual([{ kind: 'existing', item: f.bread }, { kind: 'activate', item: f.sheets, dueAt: NOW }])
+  })
+
   it('keeps a real schedule change and drops one that changes nothing', () => {
     const f = fixture()
     const ctx = buildContext(f.sections, f.items, null, NOW)
@@ -153,6 +161,18 @@ describe('applyVoice', () => {
     expect(await store.get('items', f.sheets.id)).toMatchObject({ dueAt: 456, repeatWeeks: 2, isChecked: false })
     expect(result.itemIds).toHaveLength(3)
     expect(result.sectionIds).toEqual([sections[2].id])
+  })
+
+  it('makes a waiting note active and leaves an existing one alone; undo puts the date back', async () => {
+    const f = await seed()
+    const result = await notes.applyVoice([
+      { kind: 'activate', item: f.sheets, dueAt: NOW },
+      { kind: 'existing', item: f.bread },
+    ], 'me')
+    expect(result.before.map((i) => i.id)).toEqual([f.sheets.id])
+    expect(await store.get('items', f.sheets.id)).toMatchObject({ dueAt: NOW, repeatWeeks: 2 })
+    await notes.undoVoice(result)
+    expect((await store.get('items', f.sheets.id))?.dueAt).toBe(f.sheets.dueAt)
   })
 
   it('skips new lists without a space to put them in, and notes deleted meanwhile', async () => {

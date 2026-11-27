@@ -55,8 +55,8 @@ export async function startDemoSession(): Promise<Session> {
 /**
  * Stands in for the voice-notes function: a pause, then what the model would make of "I bought the
  * olive oil and watered the plants, we need flour again, plus eggs and parmesan. I called the
- * plumber. The insurance is due next Friday. And start a list for Christmas presents: a scarf for
- * Anna." Refs are looked up by note text, so it fits whatever the seeded lists look like now.
+ * plumber. The insurance is due next Friday. We need basil, and book the winter service. And start
+ * a list for Christmas presents: a scarf for Anna." Refs are looked up by note text, so it fits whatever the seeded lists look like now.
  */
 const demoVoice: VoiceRemote = {
   async analyse(_audio: Blob, ctx: WireContext) {
@@ -68,7 +68,7 @@ const demoVoice: VoiceRemote = {
     friday.setDate(friday.getDate() + ((5 - friday.getDay() + 7) % 7 || 7))
     const iso = `${friday.getFullYear()}-${String(friday.getMonth() + 1).padStart(2, '0')}-${String(friday.getDate()).padStart(2, '0')}`
     return {
-      transcript: 'I bought the olive oil and watered the plants, we need flour again, plus eggs and parmesan. I called the plumber. The insurance is due next Friday. And start a list for Christmas presents: a scarf for Anna.',
+      transcript: 'I bought the olive oil and watered the plants, we need flour again, plus eggs and parmesan. I called the plumber. The insurance is due next Friday. We need basil, and book the winter service. And start a list for Christmas presents: a scarf for Anna.',
       newLists: [{ ref: 'n1', name: 'Christmas presents', emoji: '🎁' }],
       add: [
         { list: list('Shopping'), text: 'eggs', due: null, repeatWeeks: null },
@@ -77,6 +77,7 @@ const demoVoice: VoiceRemote = {
       ],
       check: [note('olive oil'), note('water the balcony plants'), note('call the plumber')],
       uncheck: [note('2 cups flour')],
+      existing: [note('fresh basil leaves'), note('book the winter service')],
       schedule: [{ item: note('renew contents insurance'), due: iso, repeatWeeks: null }],
     }
   },

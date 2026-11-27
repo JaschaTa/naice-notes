@@ -9,7 +9,7 @@ import { FunctionsFetchError, FunctionsHttpError, type SupabaseClient } from '@s
 import { displayText } from './display.ts'
 import { bySortKey, type Item, type Section } from './model.ts'
 import { BRAND_COLOR } from './notes.ts'
-import { dateInputToLocalStartOfDay, nextDueAt, startOfDayIn, toDateInputValue } from './schedule.ts'
+import { dateInputToLocalStartOfDay, isWaiting, nextDueAt, startOfDayIn, toDateInputValue } from './schedule.ts'
 
 // ── The wire format (supabase/functions/voice-notes/core.ts) ──
 
@@ -26,6 +26,7 @@ export interface WireProposal {
   add: { list: string; text: string; due: string | null; repeatWeeks: number | null }[]
   check: string[]
   uncheck: string[]
+  existing?: string[]
   schedule: { item: string; due: string | null; repeatWeeks: number | null }[]
 }
 
@@ -82,6 +83,10 @@ export type VoiceChange =
   | { kind: 'reset'; item: Item; dueAt: number }
   | { kind: 'uncheck'; item: Item }
   | { kind: 'schedule'; item: Item; dueAt: number | null; repeatWeeks: number | null }
+  /** Mentioned, but already open on its list: shown so it doesn't seem unheard; applies nothing. */
+  | { kind: 'existing'; item: Item }
+  /** Mentioned while waiting ("Not due yet"): needed now, like the tooltip's Make active now. */
+  | { kind: 'activate'; item: Item; dueAt: number }
 
 export interface VoiceProposal { transcript: string; changes: VoiceChange[] }
 
@@ -149,6 +154,12 @@ export function resolveProposal(wire: WireProposal, ctx: VoiceContext, sections:
     if (dueAt === i.dueAt && repeatWeeks === i.repeatWeeks) continue
     if (changes.some((c) => c.kind === 'schedule' && c.item.id === i.id)) continue
     changes.push({ kind: 'schedule', item: i, dueAt, repeatWeeks })
+  }
+  for (const ref of wire.existing ?? []) {
+    const i = item(ref)
+    if (!i || i.isChecked || touched.has(i.id) || changes.some((c) => c.kind === 'schedule' && c.item.id === i.id)) continue
+    touched.add(i.id)
+    changes.push(isWaiting(i, now) ? { kind: 'activate', item: i, dueAt: now } : { kind: 'existing', item: i })
   }
 
   return { transcript: typeof wire.transcript === 'string' ? wire.transcript.trim() : '', changes }

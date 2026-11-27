@@ -333,6 +333,9 @@ input, textarea { font-size: max(16px, 1em); }
   background: var(--surface-high); color: var(--on-surface-variant); }
 .voice-chip.date { color: var(--armed); background: color-mix(in srgb, var(--armed) 14%, transparent); }
 .voice-line.off .voice-chip { opacity: .5; }
+/* An existing note: nothing to toggle, so a small hollow dot where the tick would be, text muted. */
+.voice-noop span { width: 8px; height: 8px; border-radius: 4px; border: 1.5px solid var(--outline-variant); }
+.voice-line:has(.voice-noop) .voice-text { color: var(--on-surface-variant); }
 .voice-add-date { flex: none; align-self: center; width: 30px; height: 30px; color: var(--outline); }
 .voice-line.off .voice-add-date { opacity: .4; }
 

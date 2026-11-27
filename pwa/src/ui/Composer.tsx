@@ -101,7 +101,7 @@ export function Composer({ section, onSubmit, onScan, onVoice, onVoiceError }: {
     // Sent before the microphone was live (say, during the permission prompt): nothing to send.
     const audio = r.recording ? await r.finish() : (r.cancel(), null)
     if (audio) latest.current.onVoice(audio)
-    else latest.current.onVoiceError('Nothing was recorded. Try again once the dot turns red.')
+    else latest.current.onVoiceError('Nothing was recorded. Hold a little longer and try again.')
   }
 
   function down(x: number, y: number) {

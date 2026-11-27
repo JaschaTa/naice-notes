@@ -39,6 +39,8 @@ export interface Proposal {
   add: { list: string; text: string; due: string | null; repeatWeeks: number | null }[]
   check: string[]
   uncheck: string[]
+  /** Open notes the speaker mentioned that are already there: shown, so nothing seems to go unheard. */
+  existing: string[]
   schedule: { item: string; due: string | null; repeatWeeks: number | null }[]
 }
 
@@ -110,7 +112,7 @@ Notes:
 - One note per thing. "We need milk and eggs, and I have to call mom on Friday" is three notes ("Milch", "Eier", "Mama anrufen" due Friday), never one note holding the sentence.
 - Keep the language the thing was spoken in. Phrase each note like the existing notes in its target list (capitalisation, brevity, quantity first if they do that). Drop filler ("ähm", "ich glaube", "noch").
 - Put each note in the list whose name or contents it fits by meaning ("Einkauf", "Groceries", "Rewe" all take food). If nothing fits and the speaker didn't name a list, use the list marked (open on screen) when it fits; otherwise propose a new list.
-- Never duplicate. If a matching note exists and is ticked off ([x]), propose to untick it instead of adding it. If it exists and is open ([ ]), propose nothing for it.
+- Never duplicate. If a matching note exists and is ticked off ([x]), propose to untick it instead of adding it. If it exists and is open ([ ]), don't add it again: put its ref in existing, so the user sees it was heard.
 
 Ticking off:
 - Tick off a note when the speaker clearly says it is done, bought, handled, not needed any more, or wants it gone: "hab ich gekauft", "erledigt", "brauchen wir nicht mehr", "streich die Butter", "Butter kann weg", "nimm X raus", "lösch X", "remove X", "cross off X", "delete X". Removing is ticking off; nothing is ever deleted.
@@ -162,6 +164,7 @@ export const RESPONSE_SCHEMA = {
     },
     check: { type: 'array', items: { type: 'string' } },
     uncheck: { type: 'array', items: { type: 'string' } },
+    existing: { type: 'array', items: { type: 'string' } },
     schedule: {
       type: 'array',
       items: {
@@ -172,7 +175,7 @@ export const RESPONSE_SCHEMA = {
       },
     },
   },
-  required: ['transcript', 'newLists', 'add', 'check', 'uncheck', 'schedule'],
+  required: ['transcript', 'newLists', 'add', 'check', 'uncheck', 'existing', 'schedule'],
   additionalProperties: false,
 }
 
@@ -246,7 +249,8 @@ export function sanitizeProposal(content: string, r: VoiceRequest): Proposal | n
   const uncheck = refs(raw.uncheck, (i) => i.checked).filter((ref) => !check.includes(ref))
 
   // The prompt says never duplicate; this makes sure of it for exact matches. A note that already
-  // exists in the target list is left alone if open, and unticked instead if ticked off.
+  // exists in the target list is unticked if ticked off, and reported as existing if open.
+  const heard = new Set(refs(raw.existing, (i) => !i.checked).filter((ref) => !check.includes(ref)))
   const same = (a: string, b: string) => a.toLocaleLowerCase() === b.toLocaleLowerCase()
   const add: Proposal['add'] = []
   for (const a of arr(raw.add)) {
@@ -256,7 +260,9 @@ export function sanitizeProposal(content: string, r: VoiceRequest): Proposal | n
     if (add.some((x) => x.list === list && same(x.text, text))) continue
     const existing = r.lists.find((l) => l.ref === list)?.items.find((i) => same(i.text, text))
     if (existing) {
-      if (existing.checked && !uncheck.includes(existing.ref) && !check.includes(existing.ref)) uncheck.push(existing.ref)
+      const named = uncheck.includes(existing.ref) || check.includes(existing.ref)
+      if (existing.checked && !named) uncheck.push(existing.ref)
+      else if (!existing.checked && !named) heard.add(existing.ref)
       continue
     }
     add.push({ list, text, due: validDate(a.due), repeatWeeks: validWeeks(a.repeatWeeks) })
@@ -273,5 +279,6 @@ export function sanitizeProposal(content: string, r: VoiceRequest): Proposal | n
     schedule.push({ item: ref, due, repeatWeeks })
   }
 
-  return { transcript: oneLine(str(raw.transcript), 4000), newLists, add, check, uncheck, schedule }
+  const existing = [...heard].filter((ref) => !schedule.some((x) => x.item === ref))
+  return { transcript: oneLine(str(raw.transcript), 4000), newLists, add, check, uncheck, existing, schedule }
 }

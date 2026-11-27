@@ -167,7 +167,7 @@ export class Notes {
     for (const c of changes) {
       if (c.kind === 'check') patch(c.item.id, { isChecked: true })
       else if (c.kind === 'uncheck') patch(c.item.id, { isChecked: false })
-      else if (c.kind === 'reset') patch(c.item.id, { dueAt: c.dueAt })
+      else if (c.kind === 'reset' || c.kind === 'activate') patch(c.item.id, { dueAt: c.dueAt })
       else if (c.kind === 'schedule') patch(c.item.id, { dueAt: c.dueAt, repeatWeeks: c.repeatWeeks })
     }
     for (const [id, p] of patches) {

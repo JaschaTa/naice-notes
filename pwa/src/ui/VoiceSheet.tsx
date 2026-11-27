@@ -50,7 +50,7 @@ export function VoiceSheet({ audio, sections, items, currentId, sharedIds, space
         const ctx = buildContext(sections, items, currentId, Date.now())
         const wire = await voice.analyse(audio, ctx.wire)
         const p = resolveProposal(wire, ctx, live.current.sections, live.current.items, Date.now())
-        next = { kind: 'review', transcript: p.transcript, rows: p.changes.map((change) => ({ change, include: change.kind !== 'newList' || !!spaceId })) }
+        next = { kind: 'review', transcript: p.transcript, rows: p.changes.map((change) => ({ change, include: change.kind === 'newList' ? !!spaceId : change.kind !== 'existing' })) }
       } catch (e) {
         next = { kind: 'failed', message: e instanceof Error ? e.message : 'Something went wrong. Try again.' }
       }
@@ -92,6 +92,8 @@ export function VoiceSheet({ audio, sections, items, currentId, sharedIds, space
   const counts = (r: Row) => r.include && (r.change.kind !== 'add' || !('newList' in r.change.target) || listOn(r.change.target.newList))
     && (r.change.kind !== 'add' || r.change.text.trim() !== '')
   const chosen = rows.filter(counts)
+  /** Only notes already on their lists: nothing to apply, the sheet just says what was heard. */
+  const onlyExisting = rows.length > 0 && rows.every((r) => r.change.kind === 'existing')
 
   if (rows.length === 0) {
     return (
@@ -126,7 +128,7 @@ export function VoiceSheet({ audio, sections, items, currentId, sharedIds, space
 
   return (
     <Sheet onClose={onClose} label="Review voice note" scrimCloses={false}>
-      <h2>Review changes</h2>
+      <h2>{onlyExisting ? 'Already on your lists' : 'Review changes'}</h2>
       {transcript && (
         <details class="voice-heard">
           <summary>What I heard</summary>
@@ -162,13 +164,19 @@ export function VoiceSheet({ audio, sections, items, currentId, sharedIds, space
           </section>
         )
       })}
-      <div class="sheet-actions">
-        <button class="btn text" onClick={onClose}>Discard</button>
-        <span class="grow" />
-        <button class="btn" disabled={busy || chosen.length === 0} onClick={() => void apply()}>
-          {chosen.length === 0 ? 'Apply' : `Apply ${chosen.length} ${chosen.length === 1 ? 'change' : 'changes'}`}
-        </button>
-      </div>
+      {onlyExisting ? (
+        <div class="sheet-actions">
+          <button class="btn" onClick={onClose}>Close</button>
+        </div>
+      ) : (
+        <div class="sheet-actions">
+          <button class="btn text" onClick={onClose}>Discard</button>
+          <span class="grow" />
+          <button class="btn" disabled={busy || chosen.length === 0} onClick={() => void apply()}>
+            {chosen.length === 0 ? 'Apply' : `Apply ${chosen.length} ${chosen.length === 1 ? 'change' : 'changes'}`}
+          </button>
+        </div>
+      )}
       {editChange && editing != null && (
         <ScheduleSheet initial={editChange} canClear={editChange.dueAt != null || editChange.repeatWeeks != null}
           onClose={() => setEditing(null)}
@@ -182,7 +190,7 @@ function ChangeLine({ row, index, disabled, onToggle, onText, onDate }: {
   row: Row; index: number; disabled: boolean; onToggle: () => void; onText: (text: string) => void; onDate: () => void
 }) {
   const c = row.change
-  const on = row.include && !disabled
+  const on = (row.include || c.kind === 'existing') && !disabled
   // A dated change shows its date as a chip; an undated new note only a quiet calendar to add one.
   const label = (c.kind === 'add' || c.kind === 'schedule') ? scheduleLabel(c.dueAt, c.repeatWeeks) : null
   const date = (c.kind === 'add' || c.kind === 'schedule') && (label || c.kind === 'schedule'
@@ -190,9 +198,14 @@ function ChangeLine({ row, index, disabled, onToggle, onText, onDate }: {
     : <button class="tool voice-add-date" disabled={!on} aria-label="Add a timer" onClick={onDate}><DateRange /></button>)
   return (
     <div class={on ? 'scan-line voice-line' : 'scan-line voice-line off'}>
-      <button class="scan-check" disabled={disabled} aria-label={row.include ? 'Leave out' : 'Include'} aria-pressed={row.include} onClick={onToggle}>
-        {row.include ? <CheckCircle /> : <RadioUnchecked />}
-      </button>
+      {c.kind === 'existing' ? (
+        // Nothing to keep or drop: the note is already there. A quiet mark instead of a toggle.
+        <span class="scan-check voice-noop" aria-hidden="true"><span /></span>
+      ) : (
+        <button class="scan-check" disabled={disabled} aria-label={row.include ? 'Leave out' : 'Include'} aria-pressed={row.include} onClick={onToggle}>
+          {row.include ? <CheckCircle /> : <RadioUnchecked />}
+        </button>
+      )}
       {c.kind === 'add' ? (
         <LineText value={c.text} label={`New note ${index + 1}`} onChange={onText} />
       ) : (
@@ -201,6 +214,8 @@ function ChangeLine({ row, index, disabled, onToggle, onText, onDate }: {
       {c.kind === 'check' && <span class="voice-chip">Done</span>}
       {c.kind === 'reset' && <span class="voice-chip">Done · next {formatDueRelative(c.dueAt, Date.now())}</span>}
       {c.kind === 'uncheck' && <span class="voice-chip">Needed again</span>}
+      {c.kind === 'existing' && <span class="voice-chip">Already on the list</span>}
+      {c.kind === 'activate' && <span class="voice-chip date">Not due yet · make active</span>}
       {date}
     </div>
   )
@@ -232,6 +247,7 @@ export function summarize(changes: VoiceChange[]): string {
     n('check', 'reset') && `ticked off ${n('check', 'reset')}`,
     n('uncheck') && `${n('uncheck')} back on the list`,
     n('schedule') && plural(n('schedule'), 'timer changed', 'timers changed'),
+    n('activate') && `${n('activate')} made active`,
     n('newList') && plural(n('newList'), 'new list', 'new lists'),
   ].filter(Boolean) as string[]
   const text = parts.join(' · ')

@@ -19,7 +19,7 @@ const body = () => ({
 })
 const req = () => parseRequest(body()) as VoiceRequest
 const propose = (p: Record<string, unknown>) => sanitizeProposal(JSON.stringify({
-  transcript: 't', newLists: [], add: [], check: [], uncheck: [], schedule: [], ...p,
+  transcript: 't', newLists: [], add: [], check: [], uncheck: [], existing: [], schedule: [], ...p,
 }), req())!
 
 Deno.test('dates and repeats', () => {
@@ -84,6 +84,15 @@ Deno.test('an add that already exists in its list is never a duplicate', () => {
   ] })
   eq(p.add.map((a) => `${a.list}:${a.text}`), ['s2:Milch'])
   eq(p.uncheck, ['i2'])
+  eq(p.existing, ['i1'])
+})
+
+Deno.test('existing keeps only open notes the proposal does nothing else with', () => {
+  const p = propose({
+    existing: ['i1', 'i2', 'i3', 'i99', 'i1'],
+    schedule: [{ item: 'i3', due: '2026-12-24', repeatWeeks: 2 }],
+  })
+  eq(p.existing, ['i1']) // i2 is ticked off, i3 gets a new date, i99 doesn't exist
 })
 
 Deno.test('bad dates and repeats are dropped, unchanged schedules too', () => {
