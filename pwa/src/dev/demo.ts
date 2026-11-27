@@ -9,6 +9,7 @@ import type { Session } from '../data/session.ts'
 import { Sharing } from '../data/sharing.ts'
 import { startOfDayIn } from '../data/schedule.ts'
 import { Store } from '../data/store.ts'
+import type { VoiceRemote, WireContext } from '../data/voice.ts'
 import { SyncEngine } from '../data/sync.ts'
 
 const SPACE = 'demo-personal'
@@ -48,7 +49,37 @@ export async function startDemoSession(): Promise<Session> {
       return ['250 g Spaghetti', '2 Knoblauchzehen', '400 g gehackte Tomaten', '1 EL Olivenöl', 'Basilikum', 'Parmesan']
     },
   }
-  return { userId: 'demo', email: 'demo@example.com', store, engine, notes, sharing, scan, close: () => store.close() }
+  return { userId: 'demo', email: 'demo@example.com', store, engine, notes, sharing, scan, voice: demoVoice, close: () => store.close() }
+}
+
+/**
+ * Stands in for the voice-notes function: a pause, then what the model would make of "I bought the
+ * olive oil and watered the plants, we need flour again, plus eggs and parmesan. I called the
+ * plumber. The insurance is due next Friday. And start a list for Christmas presents: a scarf for
+ * Anna." Refs are looked up by note text, so it fits whatever the seeded lists look like now.
+ */
+const demoVoice: VoiceRemote = {
+  async analyse(_audio: Blob, ctx: WireContext) {
+    await new Promise((r) => setTimeout(r, 2200))
+    const list = (name: string) => ctx.lists.find((l) => l.name === name)?.ref ?? ctx.lists[0]?.ref ?? 's1'
+    const note = (text: string) => ctx.lists.flatMap((l) => l.items).find((i) => i.text === text)?.ref ?? ''
+    const [y, m, d] = ctx.today.split('-').map(Number)
+    const friday = new Date(y, m - 1, d)
+    friday.setDate(friday.getDate() + ((5 - friday.getDay() + 7) % 7 || 7))
+    const iso = `${friday.getFullYear()}-${String(friday.getMonth() + 1).padStart(2, '0')}-${String(friday.getDate()).padStart(2, '0')}`
+    return {
+      transcript: 'I bought the olive oil and watered the plants, we need flour again, plus eggs and parmesan. I called the plumber. The insurance is due next Friday. And start a list for Christmas presents: a scarf for Anna.',
+      newLists: [{ ref: 'n1', name: 'Christmas presents', emoji: '🎁' }],
+      add: [
+        { list: list('Shopping'), text: 'eggs', due: null, repeatWeeks: null },
+        { list: list('Shopping'), text: 'parmesan', due: null, repeatWeeks: null },
+        { list: 'n1', text: 'Scarf for Anna', due: null, repeatWeeks: null },
+      ],
+      check: [note('olive oil'), note('water the balcony plants'), note('call the plumber')],
+      uncheck: [note('2 cups flour')],
+      schedule: [{ item: note('renew contents insurance'), due: iso, repeatWeeks: null }],
+    }
+  },
 }
 
 async function seed(store: Store) {

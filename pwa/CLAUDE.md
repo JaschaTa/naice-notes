@@ -24,5 +24,6 @@ Gotchas that cost time:
 - **iOS doesn't resize the layout for the keyboard.** `#app` follows `visualViewport` (`ui/viewport.ts`); without it the composer sits behind the keyboard.
 - **Headless Chrome's `--virtual-time-budget` stalls IndexedDB** — the page looks stuck on "Loading". Use puppeteer-core with real waits for screenshots.
 - **`erasableSyntaxOnly`** is on: no constructor parameter properties (`constructor(private x)`); `tsc -b` fails while vitest still passes.
+- **The voice mic must stay the same DOM node for the whole hold** (`Composer.tsx`, keyed `voice`). Touch events keep going to the element the finger landed on; if a re-render swaps it out, the release never arrives. Chrome ignores `audioBitsPerSecond` for AAC (about 95 kbps instead of 32), which is why `voice-notes` accepts bodies up to 4 MB.
 - **Never apply a realtime payload directly.** A change notification only triggers a pull; one code path decides what a row looks like.
 - **Link previews can't be fetched from the browser** (CORS). Links added on the web arrive titleless; Android's `retryMissingLinkPreviews()` fills them in once Android syncs.

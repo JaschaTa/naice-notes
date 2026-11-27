@@ -17,6 +17,7 @@
   --badge: #e01e5a;
   --due: #ffb300;
   --armed: #4caf50;
+  --rec: #e53935; /* recording, as in every voice-message UI */
   --accent: #4caf50; /* replaced per section */
 
   --rail-width: 70px;
@@ -191,6 +192,28 @@ input, textarea { font-size: max(16px, 1em); }
 .send { width: 34px; height: 34px; border-radius: 17px; display: grid; place-items: center; background: var(--accent); color: #fff; }
 .send:disabled { background: var(--surface-highest); color: var(--outline); }
 
+/* Voice recording in the composer — WhatsApp's hold-to-record. The status covers the input (which
+   stays in place, so a raised keyboard stays up), the mic grows while held, the lock rides above. */
+.composer { position: relative; }
+.composer.recording { border-color: var(--rec); }
+.voice-status { position: absolute; left: 0; right: 0; top: 0; height: 38px; padding: 4px 14px 0; display: flex; align-items: center;
+  gap: 10px; background: var(--surface); border-radius: 14px 14px 0 0; }
+.rec-dot { flex: none; width: 10px; height: 10px; border-radius: 5px; background: var(--outline-variant); }
+.rec-dot.live { background: var(--rec); animation: blink .8s ease-in-out infinite alternate; }
+@keyframes blink { to { opacity: .25 } }
+.rec-time { flex: none; min-width: 38px; font-size: 15px; font-variant-numeric: tabular-nums; }
+.rec-levels { flex: 1; min-width: 0; height: 24px; display: flex; align-items: center; justify-content: flex-end; gap: 2px; overflow: hidden; }
+.rec-levels span { flex: none; width: 3px; border-radius: 2px; background: var(--accent); transition: height .1s linear; }
+.rec-slide { display: flex; align-items: center; gap: 2px; height: 34px; padding-left: 4px; font-size: 14px; color: var(--on-surface-variant);
+  user-select: none; -webkit-user-select: none; }
+.send.mic { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: transform .15s ease; }
+.send.mic.held { transform: scale(1.45); background: var(--rec); }
+.voice-lock { position: absolute; right: 6px; bottom: calc(100% + 10px); width: 34px; padding: 8px 0 4px; display: flex; flex-direction: column;
+  align-items: center; border-radius: 17px; background: var(--surface); border: 1px solid var(--outline-variant); color: var(--on-surface-variant);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.12); animation: rise .2s ease; }
+.voice-hint { position: absolute; right: 0; bottom: calc(100% + 8px); padding: 8px 12px; border-radius: 10px; background: #313033; color: #f4eff4;
+  font-size: 13px; white-space: nowrap; box-shadow: 0 4px 12px rgb(0 0 0 / 0.25); animation: rise .2s ease; }
+
 /* ── Empty states ── */
 .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; text-align: center; }
 .empty h2 { margin: 0; font-size: 22px; font-weight: 400; }
@@ -275,6 +298,36 @@ input, textarea { font-size: max(16px, 1em); }
 .scan-text { margin: 0; padding-left: 0; padding-right: 0; border: 0; outline: 0; background: transparent; color: inherit;
   white-space: pre-wrap; resize: none; overflow: hidden; caret-color: var(--accent); user-select: text; -webkit-user-select: text; }
 .scan-line.off .scan-text { color: var(--outline); text-decoration: line-through; }
+
+/* Voice note review (VoiceSheet): a listening wave, then the proposal grouped by list. Lines reuse
+   the scan review's .scan-line/.scan-check/LineText, so both reviews feel the same. */
+.voice-wave { height: 72px; margin: 18px 0 4px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+.voice-wave span { width: 5px; height: 14px; border-radius: 3px; background: var(--accent); animation: wave 1s ease-in-out infinite; }
+@keyframes wave { 50% { height: 56px } }
+.voice-status-text { text-align: center; }
+.voice-heard { margin: 4px 0 6px; font-size: 14px; color: var(--on-surface-variant); }
+.voice-heard summary { cursor: pointer; padding: 6px 0; font-weight: 600; }
+.voice-transcript { margin: 4px 0 8px; padding: 8px 12px; border-left: 3px solid var(--outline-variant); font-size: 14px; line-height: 1.45;
+  color: var(--on-surface-variant); }
+.voice-group { margin-top: 14px; }
+.voice-group-head { display: flex; align-items: center; gap: 10px; padding: 4px 0 2px; }
+.voice-group-head .tile { width: 30px; height: 30px; border-radius: 10px; font-size: 16px; }
+.voice-group-head .tile.letter { font-size: 14px; font-weight: 700; }
+.voice-group-head .scan-check { margin-left: auto; }
+.voice-group-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; font-weight: 600; }
+.voice-group.off .voice-group-name, .voice-group.off .tile { opacity: .45; }
+.voice-badge { flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600;
+  background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--on-surface); }
+.voice-badge.shared { background: var(--surface-high); color: var(--on-surface-variant); }
+.voice-text { flex: 1; min-width: 0; padding: 10px 0; font-size: 16px; line-height: 20px; overflow-wrap: anywhere; }
+.voice-text.done { text-decoration: line-through; color: var(--on-surface-variant); }
+.voice-line.off .voice-text { color: var(--outline); }
+.voice-chip { flex: none; align-self: center; margin-left: 4px; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: var(--surface-high); color: var(--on-surface-variant); }
+.voice-chip.date { color: var(--armed); background: color-mix(in srgb, var(--armed) 14%, transparent); }
+.voice-line.off .voice-chip { opacity: .5; }
+.voice-add-date { flex: none; align-self: center; width: 30px; height: 30px; color: var(--outline); }
+.voice-line.off .voice-add-date { opacity: .4; }
 
 /* ── Snackbar & sync status ── */
 .snackbar { position: fixed; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom) + 84px); z-index: 40; margin: 0 auto;

@@ -25,4 +25,6 @@ The repo was `naice-notes-apk` with the Android project at the top level until 2
 
 **Recipe scan** (photo → ingredient lines → items) runs in both clients through the Edge Function `supabase/functions/scan-recipe`, which calls a vision model via OpenRouter with the user's session; nothing is stored server-side, the items are added locally and sync. Setup and the OpenRouter privacy settings are in `supabase/README.md`.
 
+**Voice notes** (PWA only so far): hold the composer's mic (WhatsApp gesture) and the memo plus every list and note goes to the Edge Function `supabase/functions/voice-notes`. It returns a proposal (new notes with optional dates, tick off or untick, timer changes, new lists) that the user reviews in `VoiceSheet` before `Notes.applyVoice` writes it locally in one batch, with Undo. Contract, model choice and cost are in `supabase/README.md`.
+
 Client-side sync rules: "Android sync" in `android/CLAUDE.md`, gotchas in `pwa/CLAUDE.md`.

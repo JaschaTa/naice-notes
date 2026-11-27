@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import type { Item, Section } from '../data/model.ts'
+import type { VoiceResult } from '../data/notes.ts'
+import type { VoiceChange } from '../data/voice.ts'
 import { bySortKey } from '../data/model.ts'
 import { cssColor } from '../data/notes.ts'
 import { countsBySection, totalsBySection } from '../data/schedule.ts'
@@ -18,11 +20,12 @@ import { Snackbar, type SnackbarMessage } from './Snackbar.tsx'
 import { Tile } from './Tile.tsx'
 import { useLive } from './useLive.ts'
 import { useNow } from './useNow.ts'
+import { summarize, VoiceSheet } from './VoiceSheet.tsx'
 
 type Open =
   | { kind: 'sectionMenu' } | { kind: 'newSection' } | { kind: 'editSection' } | { kind: 'clear' } | { kind: 'deleteSection' }
   | { kind: 'itemMenu'; item: Item } | { kind: 'timer'; item: Item } | { kind: 'move'; item: Item } | { kind: 'account' }
-  | { kind: 'share'; step?: ShareStep } | { kind: 'scan'; file: File }
+  | { kind: 'share'; step?: ShareStep } | { kind: 'scan'; file: File } | { kind: 'voice'; audio: Blob }
 
 /** How long a new note stays marked: the CSS flash (`.row.fresh`, 0.7s) plus a little slack. */
 const FRESH_MS = 1000
@@ -99,6 +102,17 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
     resetTimer: (item) => void notes.resetTimer(item, now),
   }
 
+  /** After a voice memo: show where the new notes went, and offer to take the whole thing back. */
+  function voiceApplied(result: VoiceResult, changes: VoiceChange[]) {
+    markFresh(result.itemIds)
+    const newLists = changes.flatMap((c) => (c.kind === 'newList' ? [c.key] : []))
+    const targets = new Set(changes.flatMap((c) => c.kind !== 'add' ? []
+      : ['sectionId' in c.target ? c.target.sectionId : result.sectionIds[newLists.indexOf(c.target.newList)]]))
+    const [only] = targets
+    if (targets.size === 1 && only) select(only)
+    toast(summarize(changes), { label: 'Undo', run: () => void notes.undoVoice(result) })
+  }
+
   // Rows can only move within their space — the server refuses anything else.
   const moveTargets = (item: Item) => sections.filter((s) => s.id !== item.sectionId && s.spaceId === section?.spaceId)
 
@@ -131,7 +145,8 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
             </header>
             <ItemList items={items} now={now} actions={actions} fresh={fresh} />
             <Composer key={section.id} section={section}
-              onSubmit={(text, s) => void notes.addItem(section.id, text, s).then((it) => markFresh([it.id]))} onScan={pickPhoto} />
+              onSubmit={(text, s) => void notes.addItem(section.id, text, s).then((it) => markFresh([it.id]))} onScan={pickPhoto}
+              onVoice={(audio) => setOpen({ kind: 'voice', audio })} onVoiceError={(m) => toast(m)} />
           </>
         ) : (
           <div class="empty">
@@ -213,6 +228,10 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
             markFresh(ids)
             toast(`Added ${n} ${n === 1 ? 'item' : 'items'} to ${sections.find((s) => s.id === id)?.name ?? 'the section'}`)
           }} />
+      )}
+      {open?.kind === 'voice' && (
+        <VoiceSheet audio={open.audio} sections={sections} items={allItems} currentId={section?.id ?? null} sharedIds={sharedIds}
+          spaceId={personal?.id ?? null} voice={session.voice} notes={notes} onClose={close} onApplied={voiceApplied} />
       )}
       <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => {
         const file = e.currentTarget.files?.[0]

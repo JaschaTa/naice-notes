@@ -122,6 +122,43 @@ Privacy is set on the OpenRouter account, not per request:
 - Requests also send `data_collection: "deny"`.
 - Give the key a credit limit, so a leaked key can't run up a bill.
 
+## Voice notes (Edge Function `voice-notes`)
+
+`functions/voice-notes/index.ts` turns a voice memo into proposed changes to the user's lists. The
+apps send the recording (base64, as their MediaRecorder makes it: `m4a` from Safari, `webm` from
+Chrome, ≤ 2 min at 32 kbps) plus every list and note under short refs (`s1`, `i1`, not ids), today's
+local date and the open list:
+
+```json
+{ "audio": "…", "format": "m4a", "today": "2026-11-27", "weekday": "Friday", "current": "s2",
+  "lists": [{ "ref": "s1", "name": "Einkauf", "emoji": "🛒",
+              "items": [{ "ref": "i1", "text": "Milch", "checked": true, "due": null, "repeatWeeks": null }] }] }
+```
+
+and get back a proposal: `transcript`, `newLists` (refs `n1`…), `add` (to a list or new-list ref,
+with optional `due` YYYY-MM-DD and `repeatWeeks` 1–52), `check` and `uncheck` (note refs) and
+`schedule` (new due/repeat for a note). The function drops every op whose ref wasn't in the request,
+bad dates, and adds that already exist in their list (an existing ticked-off note is unticked
+instead). The apps show the proposal for review and apply what the user keeps locally, so it syncs
+like any other edit. Nothing is stored here. The pure logic is in `core.ts`, tested by
+`core.test.ts` (`deno test supabase/functions/`, part of `cd supabase/test && npm test`).
+
+The model is `google/gemini-3.8-flash` through OpenRouter (set `VOICE_NOTES_MODEL` to override),
+with the same key and account privacy settings as recipe scan below. Measured: about $0.006 and
+7 s for a one-minute memo, $0.002 and 3 s for a short one. 3.5 Flash Lite was cheaper but mixed up
+languages and invented notes on English memos against German lists. Deploy:
+
+```bash
+set -a && . ./.env && set +a
+SUPABASE_YES=1 npx supabase functions deploy voice-notes --remote="$SUPABASE_PROJECT_REF" --use-api
+```
+
+Privacy: unlike a scan, the request carries all the user's lists, including shared lists' notes
+written by other members. It goes to the model under the same ZDR settings and is never logged;
+each call logs model, provider, token usage, audio size and how many ops of each kind came back.
+Note texts are data the prompt can't fully fence off, so a note crafted by a shared-list member can
+at most steer the proposal for the lists in that request, which the user still reviews before applying.
+
 ## Sync contract (for both clients)
 
 - **Push:** upsert by client-generated `id` (`Prefer: resolution=merge-duplicates`). Never send

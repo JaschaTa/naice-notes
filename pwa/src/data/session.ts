@@ -7,6 +7,7 @@ import { SupabaseScan, type ScanRemote } from './scan.ts'
 import { Sharing, SupabaseSharing } from './sharing.ts'
 import { Store } from './store.ts'
 import { SyncEngine } from './sync.ts'
+import { SupabaseVoice, type VoiceRemote } from './voice.ts'
 
 const PERIODIC_MS = 60_000
 const LOCAL_WRITE_DEBOUNCE_MS = 400
@@ -19,6 +20,7 @@ export interface Session {
   notes: Notes
   sharing: Sharing
   scan: ScanRemote
+  voice: VoiceRemote
   close(): void
 }
 
@@ -36,6 +38,7 @@ export async function startSession(sb: SupabaseClient, userId: string, email: st
   const notes = new Notes(store, soon)
   const sharing = new Sharing(new SupabaseSharing(sb), store, engine)
   const scan = new SupabaseScan(sb)
+  const voice = new SupabaseVoice(sb)
 
   // Realtime only says "something changed"; the pull decides what. Applying payloads directly
   // would be a second code path that could disagree with the first.
@@ -51,7 +54,7 @@ export async function startSession(sb: SupabaseClient, userId: string, email: st
   now()
 
   return {
-    userId, email, store, engine, notes, sharing, scan,
+    userId, email, store, engine, notes, sharing, scan, voice,
     close() {
       clearTimeout(debounce)
       clearInterval(timer)
