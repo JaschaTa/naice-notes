@@ -239,16 +239,16 @@ otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Gmail via an app password. Custom SMTP is what unlocks editable templates on the free tier
-# (and lifts the built-in mailer's few-per-hour limit). Address and password live in the
-# repo-root .env, never here: this repo is public.
+# Brevo (EU, DPA in its terms) via an SMTP key. Custom SMTP is what unlocks editable templates on
+# the free tier (and lifts the built-in mailer's few-per-hour limit). Login, key and sender live in
+# the repo-root .env, never here: this repo is public.
 [auth.email.smtp]
 enabled = true
-host = "smtp.gmail.com"
+host = "smtp-relay.brevo.com"
 port = 587
 user = "env(SMTP_USER)"
 pass = "env(SMTP_PASS)"
-admin_email = "env(SMTP_USER)"
+admin_email = "env(SMTP_FROM)"
 sender_name = "Naice Notes"
 
 # Sign-in is by 6-digit code only (on iOS a magic link opens Safari, not the installed PWA).

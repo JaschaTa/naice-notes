@@ -7,8 +7,8 @@ Naice Notes web app. A German version is available; if the two differ, the Germa
 
 ## The short version
 
-- Naice Notes is a free, invite only notes app run by one person. There are no ads, no analytics,
-  no tracking and no cookies.
+- Naice Notes is a free, invite only notes app run by one person. The website and the app have no
+  ads, no analytics, no tracking and no cookies.
 - Your notes are stored on your device and synced through a database in Frankfurt, Germany.
 - When you scan a recipe, the photo goes to an AI model and back. It isn't stored and isn't used for
   training.
@@ -64,18 +64,19 @@ account.
 
 - **Legal basis:** Art. 6(1)(b) GDPR (providing the app you signed up for) and, for the IP address,
   Art. 6(1)(f) GDPR (protection against abuse).
-- **Service provider:** accounts are managed by Supabase, Inc. (USA), see section 5.
-- **Emails:** sign in codes and invitations are sent through a Google Mail account. For this,
-  Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Ireland) processes the recipient's
-  address and the content of the email. Google LLC (USA) is certified under the EU-US Data Privacy
-  Framework.
+- **Service provider:** accounts are managed by Supabase Pte. Ltd. (Singapore), see section 5.
+- **Emails:** sign in codes and invitations are sent by Brevo (Sendinblue SAS, 17 rue Salneuve,
+  75017 Paris, France). For this, Brevo processes the recipient's address, the content of the email
+  and delivery information on servers in the EU. I have a data processing agreement with Brevo.
+  Where Brevo group companies outside the EU (India, USA) have access, this is based on the EU
+  standard contractual clauses (Art. 46(2)(c) GDPR).
 
 ## 5. Your notes and syncing
 
 Your lists and notes (text, sort order, due dates and repeats, links, timestamps) are synced
 between your devices through a database run by Supabase. The database is hosted in the EU
 (Frankfurt, Germany, on Amazon Web Services). Supabase cannot rule out that its staff access data
-from outside the EU for support and operation; for this I have a data processing agreement with
+from outside the EU (for example from Singapore or the USA) for support and operation; for this I have a data processing agreement with
 Supabase that includes the EU standard contractual clauses (Art. 46(2)(c) GDPR).
 
 - **Legal basis:** Art. 6(1)(b) GDPR.

@@ -6,8 +6,8 @@
 //   * the address is already in that space — a member or an open invite (space_people()).
 // So it can only ever email someone the caller has just been allowed to share with.
 //
-// Mail goes out through the same Gmail account as the sign-in codes (secrets SMTP_USER /
-// SMTP_PASS — see supabase/README.md). Port 465: Edge Functions block 25 and 587.
+// Mail goes out through Brevo with the same SMTP key as the sign-in codes (secrets SMTP_USER /
+// SMTP_PASS / SMTP_FROM — see supabase/README.md). Port 465: Edge Functions block 25 and 587.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import nodemailer from 'npm:nodemailer@6'
 
@@ -86,15 +86,21 @@ Deno.serve(async (req) => {
 <p style="color:#666;font-size:13px;border-top:1px solid #e5e5e5;padding-top:12px">You got this email because ${escape(from)} entered your address in Naice Notes to share a list with you. <a href="${PRIVACY}" style="color:#666">How your address is used, and how to have it deleted</a>.</p>
 </div>`
 
+  const smtpUser = Deno.env.get('SMTP_USER'), smtpPass = Deno.env.get('SMTP_PASS'), sender = Deno.env.get('SMTP_FROM')
+  if (!smtpUser || !smtpPass || !sender) {
+    console.error('send-invite: mail not configured (SMTP_USER / SMTP_PASS / SMTP_FROM)')
+    return reply(500, { error: 'mail not configured' })
+  }
+
   try {
     const transport = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
+      host: 'smtp-relay.brevo.com',
       port: 465,
       secure: true,
-      auth: { user: Deno.env.get('SMTP_USER')!, pass: Deno.env.get('SMTP_PASS')! },
+      auth: { user: smtpUser, pass: smtpPass },
     })
     await transport.sendMail({
-      from: `"Naice Notes" <${Deno.env.get('SMTP_USER')}>`,
+      from: `"Naice Notes" <${sender}>`,
       to,
       replyTo: from,
       subject,
@@ -102,7 +108,9 @@ Deno.serve(async (req) => {
       html,
     })
   } catch (e) {
-    console.error('send-invite: mail failed', e instanceof Error ? e.message : e)
+    // Only the code: SMTP rejection texts can contain the recipient's address.
+    const err = e as { code?: unknown; responseCode?: unknown }
+    console.error('send-invite: mail failed', JSON.stringify({ code: String(err?.code ?? ''), responseCode: Number(err?.responseCode) || null }))
     return reply(502, { error: 'could not send the email' })
   }
   return reply(200, { sent: true })

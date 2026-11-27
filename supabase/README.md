@@ -41,7 +41,7 @@ queries run as `supabase_read_only_user`, which can't see triggers through `info
 **Never edit an applied migration.** Add a new file; `db push` only applies what's missing.
 
 **Settings are in `config.toml`**, pulled from the project and pushed back with `config push`.
-What's ours: `otp_length = 6`, Gmail SMTP, the two code templates, `email_sent = 30`, and `[auth.hook.before_user_created]` pointing at
+What's ours: `otp_length = 6`, Brevo SMTP, the two code templates, `email_sent = 30`, and `[auth.hook.before_user_created]` pointing at
 `public.hook_before_user_created`. Everything else is Supabase's default.
 
 **Advisors:** six "security definer function executable" warnings remain on purpose:
@@ -55,13 +55,20 @@ itself. "Leaked password protection" doesn't apply — sign-in is by emailed cod
 2. `migrations/*.sql` applied with `db push`; settings with `config push`.
 3. Email sign-up stays **on** — the hook does the gating; turning sign-ups off would block
    invited users too.
-4. **Email goes out through Gmail** (app password "Naice Notes Supabase" on the owner's Google
-   account; `SMTP_USER` / `SMTP_PASS` in `.env`, referenced as `env(…)` in `config.toml`). Custom
+4. **Email goes out through Brevo** (EU; its DPA is Appendix 3 of its terms). The domain must be
+   authenticated there before `config push` (DKIM, `_dmarc`, SPF `include:spf.brevo.com` at
+   Cloudflare, DNS only), or every sign-in email fails. Brevo adds an open pixel to every email,
+   SMTP included, and it can't be switched off: "Anonymous email tracking" and per-contact tracking
+   consent (unknown → not tracked) are on, the `X-Mailin-Track*` headers are ignored. See the
+   email item in `docs/legal/README.md`. `SMTP_USER` (the Brevo SMTP
+   login, not the account email), `SMTP_PASS` (an SMTP key, which can only send — not an API key,
+   which opens the whole account) and `SMTP_FROM` (the `noreply@` address on our domain) live in `.env`,
+   referenced as `env(…)` in `config.toml`. Until 2026-11 this was a Gmail app password. Custom
    SMTP is what makes the templates editable on the free tier — without it the API answers 400 and
    the default emails carry only a link. Both `confirmation` (first sign-in) and `magic_link`
    (later ones) use `templates/sign-in-code.html`, which shows `{{ .Token }}`: the apps sign in
    with the code, never the link, because on iOS a link opens Safari, not the installed PWA.
-   Revoking the app password stops all login emails. Rate limit raised to 30 emails/hour.
+   Revoking the SMTP key stops all login emails. Rate limit raised to 30 emails/hour; Brevo's free plan caps at 300/day, after which codes stop until the next day.
 5. Site URL = the PWA's live URL (Cloudflare Workers, see `pwa/wrangler.jsonc`). Local dev
    ports are allowed as additional redirect URLs.
 6. First user (done): `insert into public.space_invites (email) values ('<email>');` Then sign in,
@@ -74,12 +81,12 @@ itself. "Leaked password protection" doesn't apply — sign-in is by emailed cod
 it right after `share_section` succeeds; it's best-effort, so a failed email never undoes a share.
 It runs as the caller (their JWT, RLS applies) and only sends when the caller owns the section's
 shared space **and** the address is already in it (member or open invite, via `space_people()`), so
-it can't be used to mail arbitrary addresses. Mail goes through the same Gmail app password as the
+it can't be used to mail arbitrary addresses. Mail goes through the same Brevo SMTP key as the
 sign-in codes, on port 465 (Edge Functions block 25 and 587).
 
 ```bash
 set -a && . ./.env && set +a
-npx supabase secrets set --remote="$SUPABASE_PROJECT_REF" SMTP_USER="$SMTP_USER" SMTP_PASS="$SMTP_PASS"   # once
+npx supabase secrets set --remote="$SUPABASE_PROJECT_REF" SMTP_USER="$SMTP_USER" SMTP_PASS="$SMTP_PASS" SMTP_FROM="$SMTP_FROM"   # once
 npx supabase functions deploy send-invite --remote="$SUPABASE_PROJECT_REF" --use-api                    # no Docker needed
 ```
 

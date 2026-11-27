@@ -8,8 +8,8 @@ Web-App Naice Notes nutzt. Es gibt sie auch auf Englisch; bei Abweichungen gilt 
 ## Das Wichtigste in Kürze
 
 - Naice Notes ist eine kostenlose Notiz-App, die nur auf Einladung nutzbar ist und von einer
-  Privatperson betrieben wird. Es gibt keine Werbung, keine Analyse-Tools, kein Tracking und keine
-  Cookies.
+  Privatperson betrieben wird. Website und App haben keine Werbung, keine Analyse-Tools, kein
+  Tracking und keine Cookies.
 - Deine Notizen liegen auf deinem Gerät und werden über eine Datenbank in Frankfurt am Main
   synchronisiert.
 - Wenn du ein Rezept scannst, geht das Foto an ein KI-Modell und zurück. Es wird nicht gespeichert
@@ -67,18 +67,19 @@ Ein Konto anlegen können nur eingeladene Adressen.
 
 - **Rechtsgrundlage:** Art. 6 Abs. 1 lit. b DSGVO (Bereitstellung der App, für die du dich
   angemeldet hast), für die IP-Adresse Art. 6 Abs. 1 lit. f DSGVO (Schutz vor Missbrauch).
-- **Dienstleister:** Die Konten verwaltet Supabase, Inc. (USA), siehe Abschnitt 5.
-- **E-Mails:** Anmeldecodes und Einladungen werden über ein Google-Mail-Konto versendet. Dabei
-  verarbeitet Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Irland) die
-  Empfängeradresse und den Inhalt der E-Mail. Google LLC (USA) ist nach dem EU-US Data Privacy
-  Framework zertifiziert.
+- **Dienstleister:** Die Konten verwaltet Supabase Pte. Ltd. (Singapur), siehe Abschnitt 5.
+- **E-Mails:** Anmeldecodes und Einladungen versendet Brevo (Sendinblue SAS, 17 rue Salneuve,
+  75017 Paris, Frankreich). Brevo verarbeitet dafür die Empfängeradresse, den Inhalt der E-Mail und
+  Zustellinformationen auf Servern in der EU. Mit Brevo besteht ein Vertrag zur
+  Auftragsverarbeitung. Soweit Unternehmen der Brevo-Gruppe außerhalb der EU (Indien, USA) Zugriff
+  haben, geschieht das auf Grundlage der EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO).
 
 ## 5. Deine Notizen und die Synchronisierung
 
 Deine Listen und Notizen (Text, Reihenfolge, Fälligkeiten und Wiederholungen, Links, Zeitstempel)
 werden zwischen deinen Geräten über eine Datenbank von Supabase synchronisiert. Die Datenbank liegt
 in der EU (Frankfurt am Main, bei Amazon Web Services). Supabase kann nicht ausschließen, dass
-Mitarbeitende für Support und Betrieb von außerhalb der EU zugreifen. Dafür besteht mit Supabase ein
+Mitarbeitende für Support und Betrieb von außerhalb der EU (etwa aus Singapur oder den USA) zugreifen. Dafür besteht mit Supabase ein
 Vertrag zur Auftragsverarbeitung, der die EU-Standardvertragsklauseln enthält (Art. 46 Abs. 2
 lit. c DSGVO).
 

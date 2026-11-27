@@ -38,24 +38,30 @@ every change to a privacy text. The parked terms still use `{{date}}`.
 5. **Data processing agreements:**
    - Cloudflare: part of the self-serve terms every account accepts (DPA v6.4, 2026-04-03).
      Nothing to sign; note the version.
-   - Supabase: dashboard → Organization → Legal Documents, request the DPA and sign it through
-     PandaDoc. Keep the signed PDF.
-   - OpenRouter: their terms (§ 10.2) incorporate the DPA only for organizations or commercial,
-     for-profit use, which a private free project may not be. Either email OpenRouter and get it
-     confirmed in writing for this account, or call Gemini on Google Cloud Vertex AI directly:
-     the Google Cloud DPA applies to every Cloud account, an EU region keeps
-     photos in the EU, and the OpenRouter hop and its US transfer go away. Decide before voice and
-     summaries ship, since they'll use the same path.
+   - Supabase: nothing to sign. ToS § 7(b) incorporates the DPA (Version 1, 2026-08-01), which
+     takes effect on acceptance or use; DPA § 12.2: "acceptance of the Agreement shall have the
+     same effect as signing the SCCs" (Module 2, Irish law). Contract partner and data importer is
+     Supabase Pte. Ltd., Singapore. Note the version.
+   - OpenRouter: nothing to sign. ToS § 10.2 incorporates the DPA (2026-08-26) for every account,
+     its party is "the individual or entity" accepting the terms, and § 13.2 enters the SCCs
+     (Module 2) on acceptance. ZDR is part of it (§ 1.19, § 9). Note the version.
 6. ~~**Schedule `purge_tombstones()`.**~~ Done 2026-11-26: pg_cron job `purge-tombstones`, nightly
    03:17 UTC (migration `20261126000000`). First real purge around 2026-12-11; follow-ups in
    `docs/hardening.md`.
-7. **Record of processing activities** (Art. 30 GDPR), one page, kept privately, not in this repo.
-   The small-business exemption doesn't cover processing that happens regularly.
+7. ~~**Record of processing activities**~~ (Art. 30 GDPR): `verarbeitungsverzeichnis.md`, created
+   2026-11-27. Placeholders here; the filled copy is kept privately. Update it and its change log
+   whenever a recipient or processing changes.
 
 ### Should, before invites reach people you don't know
 
-8. **Replace Gmail for outgoing mail** with a provider that signs a DPA, ideally in the EU (e.g.
-   Brevo). A private Gmail account has no Art. 28 agreement. Update section 4 of the policy.
+8. **Replace Gmail for outgoing mail:** live on Brevo since 2026-11-27 (sign-in codes and invites
+   tested, SPF/DKIM/DMARC pass). Revoke the Gmail app password "Naice Notes Supabase" and drop the
+   commented Gmail lines from `.env`.
+   **Open gap:** Brevo puts an open-tracking pixel in every email and offers no way to remove it for
+   SMTP (tested: anonymous tracking, per-contact consent with unknown = no, `X-Mailin-Track*`
+   headers). That needs consent under § 25 TDDDG, and the privacy policy doesn't mention it (your
+   decision, 2026-11-27). Fix before invites reach strangers: ask Brevo support to disable tracking,
+   or move to Scaleway Transactional Email (no tracking at all; only the SMTP host and DNS change).
 
 ### Not now
 
