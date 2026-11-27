@@ -1,25 +1,23 @@
 import { useState } from 'preact/hooks'
 import { displayText, nextIconInput } from '../data/display.ts'
 import type { Item, Section } from '../data/model.ts'
-import { cssColor, SECTION_COLORS } from '../data/notes.ts'
 import { Sheet } from './Sheet.tsx'
 import { Tile } from './Tile.tsx'
 
-export interface SectionDraft { name: string; emoji: string | null; color: number }
+export interface SectionDraft { name: string; emoji: string | null }
 
-/** Create and edit share one sheet, like Android's SectionDialog. Name, icon and colour in one save. */
+/** Create and edit share one sheet, like Android's SectionDialog. Name and icon in one save; no colour, every section wears the brand coral. */
 export function SectionSheet({ section, onSave, onClose }: {
   section?: Section; onSave: (draft: SectionDraft) => void; onClose: () => void
 }) {
   const [name, setName] = useState(section?.name ?? '')
   const [emoji, setEmoji] = useState<string | null>(section?.emoji ?? null)
-  const [color, setColor] = useState(section?.color ?? SECTION_COLORS[Math.floor(Math.random() * SECTION_COLORS.length)])
   const title = section ? 'Edit section' : 'New section'
 
   return (
     <Sheet onClose={onClose} label={title}>
       <h2>{title}</h2>
-      <form onSubmit={(e) => { e.preventDefault(); if (name.trim()) { onSave({ name: name.trim(), emoji, color }); onClose() } }}>
+      <form onSubmit={(e) => { e.preventDefault(); if (name.trim()) { onSave({ name: name.trim(), emoji }); onClose() } }}>
         <div class="label">Section name</div>
         <input class="field" value={name} autoFocus={!section} onInput={(e) => setName(e.currentTarget.value)} />
 
@@ -28,17 +26,9 @@ export function SectionSheet({ section, onSave, onClose }: {
           {/* The keyboard's emoji tab is the picker; nextIconInput keeps exactly one character. */}
           <input class="field" value={emoji ?? ''} placeholder="🙂"
             onInput={(e) => { const next = nextIconInput(emoji, e.currentTarget.value); setEmoji(next); e.currentTarget.value = next ?? '' }} />
-          <Tile section={{ name: name || '•', emoji, color }} />
+          <Tile section={{ name: name || '•', emoji }} />
         </div>
         <p class="hint">Tap the field, then your keyboard's emoji key. Leave it empty to use the first letter.</p>
-
-        <div class="label">Colour</div>
-        <div class="swatches">
-          {SECTION_COLORS.map((c) => (
-            <button key={c} type="button" class={c === color ? 'swatch on' : 'swatch'} style={{ background: cssColor(c) }}
-              aria-label={cssColor(c)} aria-pressed={c === color} onClick={() => setColor(c)} />
-          ))}
-        </div>
 
         <div class="sheet-actions">
           <button type="button" class="btn text" onClick={onClose}>Cancel</button>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks'
 import { hasEmoji } from '../data/display.ts'
 import type { Section } from '../data/model.ts'
-import { cssColor, type Notes } from '../data/notes.ts'
+import type { Notes } from '../data/notes.ts'
 import type { ScanRemote } from '../data/scan.ts'
 import { downscaleToJpeg } from './image.ts'
 import { CheckCircle, RadioUnchecked } from './icons.tsx'
@@ -94,13 +94,13 @@ export function ScanSheet({ file, sections, initialSectionId, scanner, notes, on
 
   return (
     <Sheet onClose={onClose} label="Review ingredients" scrimCloses={false}>
-      <div style={{ '--accent': target ? cssColor(target.color) : undefined }}>
+      <div>
         <h2>Review ingredients</h2>
         <div class="label">Add to</div>
         <div class="scan-targets">
           {sections.map((s) => (
             <button key={s.id} class={s.id === target?.id ? 'scan-target on' : 'scan-target'}
-              style={{ '--section': cssColor(s.color) }} onClick={() => setTargetId(s.id)}>
+              onClick={() => setTargetId(s.id)}>
               {hasEmoji(s) ? `${s.emoji} ${s.name}` : s.name}
             </button>
           ))}

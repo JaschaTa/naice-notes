@@ -1,5 +1,5 @@
 /* Tokens. Android uses Material You (dynamic) for neutrals; these are fixed neutral stand-ins for
-   the roles it uses. The fixed colours (badge, amber, armed) match HomeScreen.kt exactly. The rail
+   the roles it uses. The fixed colours (amber, armed) match HomeScreen.kt exactly. The rail
    differs from Android's near-black on purpose: a light sidebar with a hairline, dark in dark mode. */
 :root {
   --surface: #ffffff;
@@ -15,11 +15,11 @@
   --scrim: rgb(0 0 0 / 0.32);
 
   --rail-bg: #f4f3f6;
-  --badge: #e01e5a;
   --due: #ffb300;
   --armed: #4caf50;
   --rec: #e53935; /* recording, as in every voice-message UI */
-  --accent: #4caf50; /* replaced per section */
+  --accent: #f0806a; /* the brand coral, the icon's colour; fills only */
+  --accent-ink: #d4503a; /* coral for text on the light surface, 4.9:1 */
 
   --rail-width: 70px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -43,6 +43,7 @@
     --on-error-container: #ffdad6;
     --scrim: rgb(0 0 0 / 0.55);
     --rail-bg: #0e0e11;
+    --accent-ink: #f0806a;
   }
 }
 
@@ -73,7 +74,7 @@ input, textarea { font-size: max(16px, 1em); }
 .field:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .btn { font-size: 16px; font-weight: 600; padding: 11px 16px; border-radius: 12px; background: var(--accent); color: #fff; }
 .btn:disabled { opacity: .45; }
-.btn.text { background: none; color: var(--accent); padding: 10px 12px; }
+.btn.text { background: none; color: var(--accent-ink); padding: 10px 12px; }
 .btn.text.danger { color: var(--error); }
 .link { color: var(--on-surface-variant); font-size: 14px; padding: 4px; }
 .muted { color: var(--on-surface-variant); }
@@ -99,7 +100,8 @@ input, textarea { font-size: max(16px, 1em); }
 .rail-indicator { position: absolute; left: 0; top: 6px; width: 3px; height: 30px; background: var(--on-surface); border-radius: 0 3px 3px 0; }
 .tile { position: relative; width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center;
   font-size: 22px; line-height: 1; transition: border-radius .15s; }
-.tile.letter { font-size: 16px; font-weight: 800; color: #fff; }
+.tile { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.tile.letter { font-size: 16px; font-weight: 800; color: var(--accent-ink); }
 .tile.active { border-radius: 15px; box-shadow: 0 0 0 2px var(--rail-bg), 0 0 0 3.5px var(--on-surface); }
 .rail-name { width: calc(var(--rail-width) - 8px); margin-top: 3px; font-size: 9px; font-weight: 700; text-align: center;
   color: var(--outline); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -107,10 +109,9 @@ input, textarea { font-size: max(16px, 1em); }
 /* Rides the tile's top-right corner; anchored to the entry, so it stays inside the rail. */
 .badge { position: absolute; top: 0; right: 7px; min-width: 18px; height: 18px; padding: 2px; border-radius: 9px; background: var(--rail-bg); }
 .badge span { display: block; min-width: 14px; height: 14px; padding: 0 4px; border-radius: 7px; font-size: 9px; font-weight: 800;
-  line-height: 14px; text-align: center; background: var(--badge); color: #fff; }
-.badge.due span { background: var(--due); color: #000; }
+  line-height: 14px; text-align: center; background: var(--accent-ink); color: var(--surface); }
 .rail-add { display: flex; justify-content: center; padding: 6px 0; width: calc(var(--rail-width) - 1px); }
-.rail-add .tile { border: 1.5px dashed var(--outline-variant); color: var(--on-surface-variant); font-size: 26px; font-weight: 300; }
+.rail-add .tile { background: none; border: 1.5px dashed var(--outline-variant); color: var(--on-surface-variant); font-size: 26px; font-weight: 300; }
 
 /* ── Header ── */
 .header { display: flex; align-items: center; gap: 4px; padding: 6px 8px 8px 6px; border-bottom: 1px solid var(--outline-variant); }
@@ -256,9 +257,6 @@ input, textarea { font-size: max(16px, 1em); }
 .icon-field { display: flex; align-items: center; gap: 14px; }
 .icon-field .field { width: 96px; text-align: center; font-size: 22px; }
 .hint { margin: 6px 0 0; font-size: 12px; color: var(--on-surface-variant); }
-.swatches { display: grid; grid-template-columns: repeat(5, 36px); gap: 12px; }
-.swatch { width: 36px; height: 36px; border-radius: 18px; }
-.swatch.on { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--on-surface); }
 .tile-shared { position: absolute; right: -5px; bottom: -5px; width: 18px; height: 18px; border-radius: 9px; display: grid; place-items: center;
   background: var(--on-surface); color: var(--surface); box-shadow: 0 0 0 1.5px var(--rail-bg); }
 .tile-shared svg { display: block; }
@@ -285,7 +283,7 @@ input, textarea { font-size: max(16px, 1em); }
 .scan-targets { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px; padding: 0 20px 2px; scrollbar-width: none; }
 .scan-target { flex: none; padding: 6px 12px; border-radius: 16px; border: 1.5px solid var(--outline-variant); font-size: 14px; font-weight: 500;
   white-space: nowrap; }
-.scan-target.on { background: var(--section); border-color: var(--section); color: #fff; }
+.scan-target.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 /* Lines wrap. The textarea and an invisible copy of its text (::after, from data-value) share one
    grid cell, so the copy sets the row height and the textarea stretches to it (ScanSheet's
    LineText). The copy wraps a little early on purpose: 10px clear on the right (iOS insets textarea

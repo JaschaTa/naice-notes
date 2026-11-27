@@ -8,7 +8,7 @@
 import { FunctionsFetchError, FunctionsHttpError, type SupabaseClient } from '@supabase/supabase-js'
 import { displayText } from './display.ts'
 import { bySortKey, type Item, type Section } from './model.ts'
-import { SECTION_COLORS } from './notes.ts'
+import { BRAND_COLOR } from './notes.ts'
 import { dateInputToLocalStartOfDay, nextDueAt, startOfDayIn, toDateInputValue } from './schedule.ts'
 
 // ── The wire format (supabase/functions/voice-notes/core.ts) ──
@@ -113,8 +113,7 @@ export function resolveProposal(wire: WireProposal, ctx: VoiceContext, sections:
   for (const n of newLists) {
     changes.push({
       kind: 'newList', key: n.ref, name: n.name.trim(), emoji: typeof n.emoji === 'string' && n.emoji.trim() ? n.emoji.trim() : null,
-      // Picked here, so the review shows the colour the list will get.
-      color: SECTION_COLORS[Math.floor(Math.random() * SECTION_COLORS.length)],
+      color: BRAND_COLOR,
     })
   }
   const newKeys = new Set(newLists.map((n) => n.ref))

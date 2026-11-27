@@ -15,7 +15,7 @@ The repo was `naice-notes-apk` with the Android project at the top level until 2
 
 - Single developer, history is linear on `main`, no branches. Commit messages are short neutral summaries, not change logs.
 - **The repo is public: no URL or secret may ever be committed.** Keys live in `android/local.properties` and `.env`, both gitignored.
-- **New features are built and tested on the PWA first.** Android is not touched (not edited, not built) until the user has tried the PWA version. Then ask whether to bring it to the APK as well, and port only on a yes.
+- **New features are built and tested on the PWA first.** Android is not touched (not edited, not built) until the user has tried the PWA version. Then ask whether to bring it to the APK as well, and port only on a yes. What's still waiting for Android is listed in [docs/android-port.md](./docs/android-port.md); add to it when a PWA change isn't ported right away.
 - **Logic shared between the clients is ported key for key, with its tests** — fractional sort keys, `Schedule`, `DateFormat`, `Grapheme`, `Section.glyph`, `Item.displayText`. Until both clients have the change, sync and display drift apart, so when a PWA-first feature changes shared logic, say so when asking about the Android port.
 - **The `security-reviewer` runs automatically whenever a change touches sync, sharing, `supabase/migrations`, `supabase/functions` or secrets. `ui-reviewer` and `/code-review` never run without the user's explicit go**; see [docs/review-loop.md](./docs/review-loop.md).
 

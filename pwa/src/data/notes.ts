@@ -6,16 +6,10 @@ import { nextDueAt } from './schedule.ts'
 import type { Store } from './store.ts'
 import type { VoiceChange } from './voice.ts'
 
-/** Mirrors SectionColorPalette on Android, as signed ARGB ints the way Kotlin's toArgb() stores them. */
-export const SECTION_COLORS: number[] = [
-  0xff4caf50, 0xff2196f3, 0xffff9800, 0xffe91e63, 0xff9c27b0,
-  0xfff44336, 0xff009688, 0xff795548, 0xff607d8b,
-].map((c) => c | 0)
-
-/** ARGB int → CSS colour. */
-export function cssColor(argb: number): string {
-  return `#${((argb >>> 0) & 0xffffff).toString(16).padStart(6, '0')}`
-}
+/** The brand coral as a signed ARGB int, the way Kotlin's toArgb() stores it. The web app has no
+ *  per-section colours any more and ignores the column, but it is synced and Android still paints
+ *  with it, so new sections are written in the brand colour. */
+export const BRAND_COLOR = 0xfff0806a | 0
 
 export class Notes {
   private store: Store
@@ -46,7 +40,7 @@ export class Notes {
     return section
   }
 
-  async updateSection(id: string, patch: Partial<Pick<Section, 'name' | 'emoji' | 'color'>>): Promise<void> {
+  async updateSection(id: string, patch: Partial<Pick<Section, 'name' | 'emoji'>>): Promise<void> {
     const s = await this.store.get('sections', id)
     if (!s) return
     await this.store.write('sections', { ...s, ...patch })
@@ -280,7 +274,7 @@ export interface VoiceResult { sectionIds: string[]; itemIds: string[]; before: 
 function newSection(spaceId: string, name: string, emoji: string | null, sortKey: string, color?: number): Section {
   return {
     id: crypto.randomUUID(), spaceId, name, emoji,
-    color: color ?? SECTION_COLORS[Math.floor(Math.random() * SECTION_COLORS.length)],
+    color: color ?? BRAND_COLOR,
     sortKey, createdAt: Date.now(), deletedAt: null, rev: null, dirty: 1, version: 0,
   }
 }

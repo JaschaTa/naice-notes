@@ -3,7 +3,6 @@ import type { Item, Section } from '../data/model.ts'
 import type { VoiceResult } from '../data/notes.ts'
 import type { VoiceChange } from '../data/voice.ts'
 import { bySortKey } from '../data/model.ts'
-import { cssColor } from '../data/notes.ts'
 import { countsBySection, totalsBySection } from '../data/schedule.ts'
 import type { Session } from '../data/session.ts'
 import type { SyncStatus } from '../data/sync.ts'
@@ -117,7 +116,7 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
   const moveTargets = (item: Item) => sections.filter((s) => s.id !== item.sectionId && s.spaceId === section?.spaceId)
 
   return (
-    <div class="app" style={{ '--accent': section ? cssColor(section.color) : undefined }}>
+    <div class="app">
       <Rail sections={sections} sharedIds={sharedIds} activeId={section?.id ?? null} counts={counts} collapsed={collapsed || sections.length === 0}
         onSelect={select} onAdd={() => setOpen({ kind: 'newSection' })}
         onReorder={(id, to) => {
@@ -172,7 +171,7 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
       )}
       {open?.kind === 'newSection' && personal && (
         <SectionSheet onClose={close} onSave={async (d) => {
-          select((await notes.addSection(personal.id, d.name, d.emoji, d.color)).id)
+          select((await notes.addSection(personal.id, d.name, d.emoji)).id)
         }} />
       )}
       {open?.kind === 'editSection' && section && (

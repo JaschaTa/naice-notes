@@ -33,7 +33,7 @@ export function Rail({ sections, sharedIds, activeId, counts, collapsed, onSelec
             {active && <span class="rail-indicator" />}
             <Tile section={s} active={active} shared={sharedIds.has(s.id)} />
             {c && c.open > 0 && (
-              <span class={c.due > 0 ? 'badge due' : 'badge'}>
+              <span class="badge">
                 <span>{c.open > 99 ? '99+' : c.open}</span>
               </span>
             )}
