@@ -19,7 +19,7 @@ Layout: `src/data/` is UI-free (store = IndexedDB mirror + outbox, sync engine, 
 
 Gotchas that cost time:
 
-- **The app moved from `/` to `/app/` on 2026-11-27, and `/` must keep sending people on.** Home-screen installs still open `/` (iOS keeps the URL from install time). The inline script in `index.html` sends installed apps and anyone with a Supabase session (`sb-…-auth-token` in localStorage) to `/app/` before first paint. The manifest's `id` stays `'/'`, or Chrome treats existing installs as a different app.
+- **The app moved from `/` to `/app/` on 2026-11-27, and `/` doesn't forward.** With two users, a redirect for old home-screen installs and signed-in visitors wasn't worth it: an icon added before the move opens the landing page, "Sign in" leads on, and re-adding it from `/app/` fixes it. The manifest's `id` stays `'/'`, or Chrome would treat existing installs as a different app.
 - **Gestures use touch events, not pointer events.** On iOS a vertical pointer move inside a scroller is claimed by the browser (`pointercancel`) unless every `touchmove` is cancelled, and only touch events can be. `useRowGestures.ts` also needs `-webkit-touch-callout: none` on rows, or a long press opens the system magnifier instead of starting a drag.
 - **iOS doesn't resize the layout for the keyboard.** `#app` follows `visualViewport` (`ui/viewport.ts`); without it the composer sits behind the keyboard.
 - **Headless Chrome's `--virtual-time-budget` stalls IndexedDB** — the page looks stuck on "Loading". Use puppeteer-core with real waits for screenshots.

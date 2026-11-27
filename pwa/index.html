@@ -3,20 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<script>
-  // The app lives at /app/. Home-screen installs still open / (iOS keeps the URL from install
-  // time), and people who are signed in expect their notes, so both go straight to the app,
-  // before anything paints. Supabase keeps the session under sb-<project>-auth-token.
-  (function () {
-    try {
-      var installed = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true
-      var signedIn = false
-      for (var i = 0; i < localStorage.length; i++) if (/^sb-.+-auth-token$/.test(localStorage.key(i) || '')) { signedIn = true; break }
-      if (installed || signedIn) location.replace('/app/' + location.search + location.hash)
-    } catch (e) { /* storage blocked: just show the page */ }
-    document.documentElement.classList.add('js')
-  })()
-</script>
+<script>document.documentElement.classList.add('js')</script>
 <title>Naice Notes · The notes app you always wanted</title>
 <meta name="description" content="Ramble, snap or type, and Naice Notes turns it into tidy lists you can share. Reminders wait until they're due. Free and invite only." />
 <link rel="canonical" href="https://naice-notes.com/" />
