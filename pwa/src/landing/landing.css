@@ -125,7 +125,8 @@ section { padding: var(--s-900) 0; }
 .stage.has-hand .phone .island { top: 1.1%; width: 32%; height: 4.4%; margin-left: 0; transform: translateX(-50%); border-radius: 999px; }
 .stage.has-hand .app-rail { width: 48px; padding-top: 48px; }
 .stage.has-hand .app-rail .t { width: 34px; height: 34px; border-radius: 11px; font-size: 17px; }
-.stage.has-hand .status { height: 44px; padding: 0 18px 4px 12px; }
+.stage.has-hand .status { height: 37px; }
+.stage.has-hand .app-main { padding-top: 44px; }
 
 .phone { position: relative; width: 340px; height: 700px; margin: 0 auto; padding: 12px; border-radius: 56px; background: #0E0E0E;
   box-shadow: 0 1px 0 1px #2A2A2A inset, 0 40px 80px rgba(20,20,20,0.18), 0 8px 24px rgba(20,20,20,0.12); }
@@ -143,7 +144,14 @@ section { padding: var(--s-900) 0; }
 .t .b.pop { animation: pop .5s var(--ease); }
 @keyframes pop { 50% { transform: scale(1.35); } }
 .app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.status { height: 52px; flex: none; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 20px 6px 14px; font-size: 13px; font-weight: 600; }
+/* iOS status bar across the whole screen: clock centred in the left ear, signal/wifi/battery in the right one,
+   vertically level with the island. Difference blending keeps it readable over the dark rail and the white list. */
+.status { position: absolute; top: 0; left: 0; right: 0; height: 52px; z-index: 2; display: grid; grid-template-columns: 1fr 34% 1fr; align-items: center;
+  color: #fff; mix-blend-mode: difference; font-size: 13px; font-weight: 600; letter-spacing: -0.2px; font-variant-numeric: tabular-nums; pointer-events: none; }
+.status .clock { justify-self: start; padding-left: 15px; }
+.status .sys { grid-column: 3; justify-self: center; display: flex; align-items: center; gap: 4px; }
+.status svg { display: block; fill: currentColor; }
+.app-main { padding-top: 52px; }
 .app-head { padding: 6px 12px 8px; border-bottom: 1px solid #c7c5d0; }
 .app-head .name { font-size: 21px; font-weight: 700; letter-spacing: -0.5px; }
 .app-head .counts { font-size: 11.5px; color: #46464f; margin-top: 2px; display: flex; align-items: center; gap: 6px; }
