@@ -160,9 +160,8 @@ export function Home({ session, onSignOut }: { session: Session; onSignOut: () =
 
       {open?.kind === 'sectionMenu' && section && (
         <MenuSheet title={section.name} onClose={close} entries={[
-          { label: 'Scan recipe…', onSelect: pickPhoto },
           { label: 'Clear…', onSelect: () => setOpen({ kind: 'clear' }) },
-          { label: 'Edit section', onSelect: () => setOpen({ kind: 'editSection' }) },
+          { label: 'Edit section…', onSelect: () => setOpen({ kind: 'editSection' }) },
           { label: role === 'private' ? 'Share…' : 'Sharing…', onSelect: () => setOpen({ kind: 'share' }) },
           // Only the owner deletes a shared section; the other person can only leave it.
           role === 'member'
@@ -249,7 +248,7 @@ function itemMenu(item: Item, targets: Section[], actions: ItemActions, setOpen:
   const scheduled = item.dueAt != null || item.repeatWeeks != null
   return [
     { label: item.isChecked ? 'Mark as open' : 'Mark as done', onSelect: () => actions.toggle(item) },
-    { label: scheduled ? 'Edit timer' : 'Add timer', onSelect: () => setOpen({ kind: 'timer', item }) },
+    { label: scheduled ? 'Edit timer…' : 'Add timer…', onSelect: () => setOpen({ kind: 'timer', item }) },
     ...(item.linkUrl ? [{ label: 'Open link', onSelect: () => window.open(item.linkUrl!, '_blank', 'noopener') }] : []),
     ...(targets.length > 0 ? [{ label: 'Move to section…', onSelect: () => setOpen({ kind: 'move', item }) }] : []),
     { label: 'Delete', danger: true, onSelect: () => actions.delete(item) },

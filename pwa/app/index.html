@@ -6,7 +6,10 @@
     <title>Naice Notes</title>
     <!-- The app itself isn't for search engines; the landing page at / is. -->
     <meta name="robots" content="noindex" />
-    <meta name="theme-color" content="#f0806a" />
+    <!-- Android paints its status and navigation bars in this colour: the app's surface, so the bars
+         blend into the header and the composer instead of framing the app in the brand coral. -->
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#131316" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <!-- iOS ignores the manifest icons and wants an opaque PNG here -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

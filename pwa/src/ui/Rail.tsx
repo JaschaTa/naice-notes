@@ -3,7 +3,7 @@ import type { SectionCounts } from '../data/schedule.ts'
 import { Tile } from './Tile.tsx'
 import { useRowGestures } from './useRowGestures.ts'
 
-/** Fixed near-black in both themes: it has to make nine saturated section colours read as accents. */
+/** A quiet sidebar in the app's own neutrals, set off from the list by a hairline like the header's. */
 export function Rail({ sections, sharedIds, activeId, counts, collapsed, onSelect, onAdd, onReorder }: {
   sections: Section[]
   /** Sections someone else can see too; their tiles carry a marker. */
@@ -33,7 +33,7 @@ export function Rail({ sections, sharedIds, activeId, counts, collapsed, onSelec
             {active && <span class="rail-indicator" />}
             <Tile section={s} active={active} shared={sharedIds.has(s.id)} />
             {c && c.open > 0 && (
-              <span class={c.due > 0 ? 'badge due' : 'badge'} style={{ top: 0, right: 10 }}>
+              <span class={c.due > 0 ? 'badge due' : 'badge'}>
                 <span>{c.open > 99 ? '99+' : c.open}</span>
               </span>
             )}

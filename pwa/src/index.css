@@ -1,5 +1,6 @@
 /* Tokens. Android uses Material You (dynamic) for neutrals; these are fixed neutral stand-ins for
-   the roles it uses. The fixed colours (rail, badge, amber, armed) match HomeScreen.kt exactly. */
+   the roles it uses. The fixed colours (badge, amber, armed) match HomeScreen.kt exactly. The rail
+   differs from Android's near-black on purpose: a light sidebar with a hairline, dark in dark mode. */
 :root {
   --surface: #ffffff;
   --surface-high: #ebe9ee;
@@ -13,7 +14,7 @@
   --on-error-container: #410002;
   --scrim: rgb(0 0 0 / 0.32);
 
-  --rail-bg: #1a1d21;
+  --rail-bg: #f4f3f6;
   --badge: #e01e5a;
   --due: #ffb300;
   --armed: #4caf50;
@@ -41,6 +42,7 @@
     --error-container: #93000a;
     --on-error-container: #ffdad6;
     --scrim: rgb(0 0 0 / 0.55);
+    --rail-bg: #0e0e11;
   }
 }
 
@@ -87,27 +89,28 @@ input, textarea { font-size: max(16px, 1em); }
   padding-top: env(safe-area-inset-top); padding-right: env(safe-area-inset-right); }
 
 /* ── Rail ── */
-.rail { width: var(--rail-width); flex: none; background: var(--rail-bg); overflow: hidden auto;
+.rail { width: var(--rail-width); flex: none; background: var(--rail-bg); border-right: 1px solid var(--outline-variant); overflow: hidden auto;
   padding: calc(env(safe-area-inset-top) + 8px) 0 calc(env(safe-area-inset-bottom) + 8px) env(safe-area-inset-left);
   transition: width .22s ease; scrollbar-width: none; }
-.rail.collapsed { width: 0; padding-left: 0; }
-.rail-entry { position: relative; display: flex; flex-direction: column; align-items: center; width: var(--rail-width); padding: 4px 0;
+.rail.collapsed { width: 0; padding-left: 0; border-right-width: 0; }
+.rail-entry { position: relative; display: flex; flex-direction: column; align-items: center; width: calc(var(--rail-width) - 1px); padding: 4px 0;
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: pan-y; }
 .rail-entry.dragging { opacity: .85; z-index: 2; }
-.rail-indicator { position: absolute; left: 0; top: 6px; width: 3px; height: 30px; background: #fff; border-radius: 0 3px 3px 0; }
+.rail-indicator { position: absolute; left: 0; top: 6px; width: 3px; height: 30px; background: var(--on-surface); border-radius: 0 3px 3px 0; }
 .tile { position: relative; width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center;
   font-size: 22px; line-height: 1; transition: border-radius .15s; }
 .tile.letter { font-size: 16px; font-weight: 800; color: #fff; }
-.tile.active { border-radius: 15px; box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.9); }
+.tile.active { border-radius: 15px; box-shadow: 0 0 0 2px var(--rail-bg), 0 0 0 3.5px var(--on-surface); }
 .rail-name { width: calc(var(--rail-width) - 8px); margin-top: 3px; font-size: 9px; font-weight: 700; text-align: center;
-  color: rgb(255 255 255 / 0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rail-name.active { color: #fff; }
-.badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 2px; border-radius: 9px; background: var(--rail-bg); }
+  color: var(--outline); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rail-name.active { color: var(--on-surface); }
+/* Rides the tile's top-right corner; anchored to the entry, so it stays inside the rail. */
+.badge { position: absolute; top: 0; right: 7px; min-width: 18px; height: 18px; padding: 2px; border-radius: 9px; background: var(--rail-bg); }
 .badge span { display: block; min-width: 14px; height: 14px; padding: 0 4px; border-radius: 7px; font-size: 9px; font-weight: 800;
   line-height: 14px; text-align: center; background: var(--badge); color: #fff; }
 .badge.due span { background: var(--due); color: #000; }
-.rail-add { display: flex; justify-content: center; padding: 6px 0; width: var(--rail-width); }
-.rail-add .tile { background: rgb(255 255 255 / 0.10); color: rgb(255 255 255 / 0.7); font-size: 26px; font-weight: 300; }
+.rail-add { display: flex; justify-content: center; padding: 6px 0; width: calc(var(--rail-width) - 1px); }
+.rail-add .tile { border: 1.5px dashed var(--outline-variant); color: var(--on-surface-variant); font-size: 26px; font-weight: 300; }
 
 /* ── Header ── */
 .header { display: flex; align-items: center; gap: 4px; padding: 6px 8px 8px 6px; border-bottom: 1px solid var(--outline-variant); }
@@ -186,10 +189,10 @@ input, textarea { font-size: max(16px, 1em); }
   border: 0; outline: 0; background: transparent; caret-color: var(--accent); }
 .composer-input::placeholder { color: var(--on-surface-variant); }
 .composer-tools { display: flex; align-items: center; gap: 2px; padding: 2px 6px 6px; }
-.tool { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; color: var(--on-surface-variant); }
+.tool { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; color: var(--on-surface-variant); }
 .tool.armed { background: color-mix(in srgb, var(--armed) 18%, transparent); color: var(--armed); }
 .spacer { flex: 1; }
-.send { width: 34px; height: 34px; border-radius: 17px; display: grid; place-items: center; background: var(--accent); color: #fff; }
+.send { width: 40px; height: 40px; border-radius: 20px; display: grid; place-items: center; background: var(--accent); color: #fff; }
 .send:disabled { background: var(--surface-highest); color: var(--outline); }
 
 /* Voice recording in the composer — WhatsApp's hold-to-record. The status covers the input (which
@@ -204,12 +207,12 @@ input, textarea { font-size: max(16px, 1em); }
 .rec-time { flex: none; min-width: 38px; font-size: 15px; font-variant-numeric: tabular-nums; }
 .rec-levels { flex: 1; min-width: 0; height: 24px; display: flex; align-items: center; justify-content: flex-end; gap: 2px; overflow: hidden; }
 .rec-levels span { flex: none; width: 3px; border-radius: 2px; background: var(--accent); transition: height .1s linear; }
-.rec-slide { display: flex; align-items: center; gap: 2px; height: 34px; padding-left: 4px; font-size: 14px; color: var(--on-surface-variant);
+.rec-slide { display: flex; align-items: center; gap: 2px; height: 40px; padding-left: 4px; font-size: 14px; color: var(--on-surface-variant);
   user-select: none; -webkit-user-select: none; }
 .send.mic { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; transition: transform .15s ease; }
-.send.mic.held { transform: scale(1.45); background: var(--rec); }
-.voice-lock { position: absolute; right: 6px; bottom: calc(100% + 10px); width: 34px; padding: 8px 0 4px; display: flex; flex-direction: column;
-  align-items: center; border-radius: 17px; background: var(--surface); border: 1px solid var(--outline-variant); color: var(--on-surface-variant);
+.send.mic.held { transform: scale(1.4); background: var(--rec); }
+.voice-lock { position: absolute; right: 6px; bottom: calc(100% + 10px); width: 40px; padding: 8px 0 4px; display: flex; flex-direction: column;
+  align-items: center; border-radius: 20px; background: var(--surface); border: 1px solid var(--outline-variant); color: var(--on-surface-variant);
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.12); animation: rise .2s ease; }
 .voice-hint { position: absolute; right: 0; bottom: calc(100% + 8px); padding: 8px 12px; border-radius: 10px; background: #313033; color: #f4eff4;
   font-size: 13px; white-space: nowrap; box-shadow: 0 4px 12px rgb(0 0 0 / 0.25); animation: rise .2s ease; }
@@ -257,8 +260,9 @@ input, textarea { font-size: max(16px, 1em); }
 .swatch { width: 36px; height: 36px; border-radius: 18px; }
 .swatch.on { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--on-surface); }
 .tile-shared { position: absolute; right: -5px; bottom: -5px; width: 18px; height: 18px; border-radius: 9px; display: grid; place-items: center;
-  background: var(--rail-bg); color: #fff; box-shadow: 0 0 0 1.5px var(--rail-bg); }
+  background: var(--on-surface); color: var(--surface); box-shadow: 0 0 0 1.5px var(--rail-bg); }
 .tile-shared svg { display: block; }
+.rail-toggle .tile-shared, .move-row .tile-shared, .voice-group-head .tile-shared { box-shadow: 0 0 0 1.5px var(--surface); }
 .rail-toggle .tile-shared { width: 15px; height: 15px; right: -4px; bottom: -4px; }
 .person { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 2px; border-bottom: 1px solid var(--outline-variant); font-size: 15px; }
 .person:last-of-type { border-bottom: 0; }
