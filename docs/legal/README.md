@@ -13,7 +13,7 @@ convenience translation; drop it if keeping two versions in sync is too much.
 
 | File | Status | Link from |
 |---|---|---|
-| `impressum.md` | needed, DE + EN | footer of the landing page and the app |
+| `impressum.md` | needed, DE only | footer of the landing page and the app |
 | `privacy.de.md` | needed, binding | footer, sign in screen, invite email |
 | `privacy.en.md` | optional translation | next to the German one |
 | `terms.de.md`, `terms.en.md` | parked until something costs money | — |

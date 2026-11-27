@@ -26,7 +26,7 @@ const OPTIONAL = new Set(['phone'])
 export interface LegalPage { file: string; out: string; path: string; lang: 'de' | 'en'; title: string; other?: { href: string; label: string } }
 
 export const PAGES: LegalPage[] = [
-  { file: 'impressum.md', out: 'impressum/index.html', path: '/impressum/', lang: 'de', title: 'Impressum · Legal notice' },
+  { file: 'impressum.md', out: 'impressum/index.html', path: '/impressum/', lang: 'de', title: 'Impressum' },
   { file: 'privacy.de.md', out: 'privacy/index.html', path: '/privacy/', lang: 'de', title: 'Datenschutzerklärung', other: { href: '/privacy/en/', label: 'English version' } },
   { file: 'privacy.en.md', out: 'privacy/en/index.html', path: '/privacy/en/', lang: 'en', title: 'Privacy policy', other: { href: '/privacy/', label: 'Deutsche Fassung (verbindlich)' } },
 ]
