@@ -62,12 +62,25 @@ const car = $('carousel')
 const prev = $<HTMLButtonElement>('car-prev')
 const next = $<HTMLButtonElement>('car-next')
 const cardW = () => (car.children[1] as HTMLElement).offsetLeft - (car.children[0] as HTMLElement).offsetLeft
+const cards = [...car.children] as HTMLElement[]
+const go = (left: number) => car.scrollTo({ left, behavior: still ? 'auto' : 'smooth' })
+// Phones: one dot per card, the current one drawn wide; tapping a dot jumps to its card.
+const dots = cards.map((card, i) => {
+  const d = document.createElement('button')
+  d.setAttribute('aria-label', `Card ${i + 1}: ${card.querySelector('h3')!.textContent}`)
+  d.addEventListener('click', () => go(card.offsetLeft - cards[0].offsetLeft))
+  $('car-dots').appendChild(d)
+  return d
+})
 const sync = () => {
+  const atEnd = car.scrollLeft >= car.scrollWidth - car.clientWidth - 2
   prev.disabled = car.scrollLeft <= 2
-  next.disabled = car.scrollLeft >= car.scrollWidth - car.clientWidth - 2
+  next.disabled = atEnd
+  const current = atEnd ? cards.length - 1 : Math.round(car.scrollLeft / cardW())
+  dots.forEach((d, i) => d.setAttribute('aria-current', String(i === current)))
 }
-prev.addEventListener('click', () => car.scrollBy({ left: -cardW(), behavior: still ? 'auto' : 'smooth' }))
-next.addEventListener('click', () => car.scrollBy({ left: cardW(), behavior: still ? 'auto' : 'smooth' }))
+prev.addEventListener('click', () => go(car.scrollLeft - cardW()))
+next.addEventListener('click', () => go(car.scrollLeft + cardW()))
 car.addEventListener('scroll', sync, { passive: true })
 addEventListener('resize', sync)
 sync()

@@ -229,7 +229,13 @@ section { padding: var(--s-900) 0; }
 .car-btn:disabled { opacity: 0.35; cursor: default; }
 .car-btn:active:not(:disabled) { transform: scale(0.98); }
 .car-btn svg { width: 20px; height: 20px; }
-@media (max-width: 720px) { .car-nav { display: none; } }
+@media (max-width: 720px) { .car-nav { display: none; } .carousel { gap: var(--s-200); } }
+/* Phones get no arrows, so dots under the row show that there are more cards and which one is up. */
+.car-dots { display: none; justify-content: center; gap: var(--s-75); margin-top: var(--s-300); }
+@media (max-width: 720px) { .car-dots { display: flex; } }
+.car-dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 4px; background: rgba(20, 20, 20, 0.2); cursor: pointer; position: relative; transition: width 0.25s, background 0.25s; }
+.car-dots button::after { content: ''; position: absolute; inset: -12px -6px; } /* 32px-high tap target */
+.car-dots button[aria-current='true'] { width: 24px; background: var(--ink); }
 .panel { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: var(--s-400) var(--s-400) 0; display: flex; flex-direction: column; align-items: center; text-align: center; overflow: hidden; }
 .panel p { margin-top: var(--s-75); max-width: 300px; }
 .crop { margin-top: var(--s-400); width: 260px; height: 300px; border-radius: 40px 40px 0 0; background: #0E0E0E; padding: 10px 10px 0; }
